@@ -39,6 +39,7 @@ a{color:#f2b73d;text-decoration:none;}a:hover{color:#ffd97a;}
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0818;font-family:'Press Start 2P',monospace;font-size:10px;color:#4b418a;letter-spacing:1px;">LOADING...</div>
 </div>
 
+<script src="config.js"></script>
 <script>
 /* ---------- pixel-art data (loaded from /data/*.json) ---------- */
 let HAIRS, BODY, AVATARS, S, SLAB, SCOL, CLASSES, QS, OMENS, ROLLS, MEMBERS;
@@ -71,6 +72,56 @@ function esc(str) {
   return String(str).replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
 }
 
+const Api = {
+  config: window.INV_GUILD_CONFIG || {},
+
+  get ready() { return Boolean(this.config.supabaseUrl && this.config.supabasePublishableKey); },
+
+  async rpc(name, body) {
+    const response = await fetch(this.config.supabaseUrl.replace(/\/$/, "") + "/rest/v1/rpc/" + name, {
+      method: "POST",
+      headers: {
+        apikey: this.config.supabasePublishableKey,
+        Authorization: "Bearer " + this.config.supabasePublishableKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body || {})
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.message || "Supabase request failed (" + response.status + ")");
+    }
+    return response.json();
+  },
+
+  normalize(member) {
+    return {
+      id: member.id,
+      n: member.name,
+      r: member.role,
+      c: member.class_id,
+      av: member.avatar_id,
+      lv: member.level
+    };
+  },
+
+  async getMember(id) {
+    const rows = await this.rpc("get_member_by_id", { p_id: id });
+    return rows[0] ? this.normalize(rows[0]) : null;
+  },
+
+  async listMembers() {
+    const rows = await this.rpc("list_assigned_members");
+    return rows.map(row => this.normalize(row));
+  },
+
+  async assignMember(id, classId, avatarId) {
+    const rows = await this.rpc("assign_member_class", { p_id: id, p_class_id: classId, p_avatar_id: avatarId });
+    if (!rows[0]) throw new Error("ไม่พบสมาชิกสำหรับลิงก์นี้");
+    return this.normalize(rows[0]);
+  }
+};
+
 /* pixel avatar block: 84x84 base grid, optional scale for thumbnails */
 function pixelAvatar(shadow, scale) {
   scale = scale || 1;
@@ -83,18 +134,22 @@ function pixelAvatar(shadow, scale) {
 /* ---------- app state + logic ---------- */
 const App = {
   state: {
-    screen: "welcome",
+    screen: "loading",
+    mode: "guest",
+    memberId: null,
+    currentMember: null,
     avatarId: "a1",
     name: "",
     qi: 0,
     answers: [],
     resultId: null,
-    fromCodex: false,
     prev: null,
     quizId: null,
     bestScore: 0,
     luck: null,
-    filter: "all"
+    filter: "all",
+    error: null,
+    rosterError: null
   },
 
   set(patch) { Object.assign(this.state, patch); this.render(); },
@@ -109,20 +164,32 @@ const App = {
   },
 
   goWelcome() { this.set({ screen: "welcome" }); },
-  goAvatar() { this.set({ screen: "avatar" }); },
+  goAvatar() {
+    if (this.state.mode === "guest" || !this.state.currentMember || !this.state.currentMember.c) {
+      this.set({ screen: "avatar" });
+    }
+  },
+  goHomePrimary() {
+    const member = this.state.currentMember;
+    if (this.state.mode === "member" && member && member.c) {
+      this.set({ screen: "memberProfile", resultId: member.c, avatarId: member.av, luck: this.state.luck || this.rollLuck() });
+    } else {
+      this.goAvatar();
+    }
+  },
   goCodex() { this.set({ screen: "codex", prev: this.state.screen }); },
-  codexBack() { this.set({ screen: this.state.prev || (this.state.resultId ? "result" : "welcome") }); },
+  codexBack() { this.set({ screen: this.state.prev || "welcome" }); },
   goRoster() { this.set({ screen: "roster", prev: this.state.screen }); },
   rosterBack() { this.set({ screen: this.state.prev || "welcome" }); },
   startQuiz() { this.set({ screen: "quiz", qi: 0, answers: [] }); },
-  restart() { this.set({ screen: "avatar", qi: 0, answers: [], resultId: null }); },
+  restart() { if (this.state.mode === "guest") this.set({ screen: "avatar", qi: 0, answers: [], resultId: null }); },
   prevQ() { this.state.qi === 0 ? this.set({ screen: "avatar" }) : this.set({ qi: this.state.qi - 1 }); },
   rerollLuck() { this.set({ luck: this.rollLuck() }); },
   setName(v) { this.state.name = v; },
   pickAvatar(id) { this.set({ avatarId: id }); },
   setFilter(id) { this.set({ filter: id }); },
 
-  answer(qi, optIdx) {
+  async answer(qi, optIdx) {
     const w = QS[qi].options[optIdx].scores;
     const answers = this.state.answers.slice();
     answers[qi] = w;
@@ -131,28 +198,58 @@ const App = {
       answers.forEach(a => { if (!a) return; Object.keys(a).forEach(k => score[k] = (score[k] || 0) + a[k]); });
       let best = CLASSES[0].id, bv = -1;
       CLASSES.forEach(c => { if ((score[c.id] || 0) > bv) { bv = score[c.id] || 0; best = c.id; } });
-      this.set({ answers, resultId: best, quizId: best, bestScore: bv, screen: "result", fromCodex: false, luck: this.rollLuck() });
+      const result = { answers, resultId: best, quizId: best, bestScore: bv, luck: this.rollLuck() };
+      if (this.state.mode === "guest") {
+        this.set(Object.assign(result, { screen: "quizResult" }));
+        return;
+      }
+
+      Object.assign(this.state, result);
+      await this.saveAssignment(best);
     } else {
       this.set({ answers, qi: qi + 1 });
     }
   },
 
   openClass(id) {
-    this.set({ resultId: id, screen: "result", fromCodex: true, prev: this.state.screen, luck: this.rollLuck() });
+    const prev = this.state.screen === "classDetail" ? "codex" : this.state.screen;
+    this.set({ resultId: id, screen: "classDetail", prev, luck: this.rollLuck() });
+  },
+
+  openMember(id) {
+    const member = MEMBERS.find(item => item.id === id);
+    if (member) this.set({ currentMember: member, resultId: member.c, avatarId: member.av, screen: "memberProfile", prev: "roster" });
   },
 
   resultBack() {
     const st = this.state;
-    if (!st.fromCodex) return;
-    if (st.prev === "result" && st.quizId) this.set({ resultId: st.quizId, fromCodex: false, luck: this.rollLuck() });
-    else this.set({ screen: st.prev === "roster" ? "roster" : "codex" });
+    if (st.screen === "classDetail") this.set({ screen: st.prev || "codex" });
+    else if (st.screen === "memberProfile" && st.prev === "roster") this.set({ screen: "roster" });
+  },
+
+  retrySave() {
+    if (this.state.resultId) this.saveAssignment(this.state.resultId);
+  },
+
+  async saveAssignment(classId) {
+    this.set({ screen: "saving", error: null });
+    try {
+      const member = await Api.assignMember(this.state.memberId, classId, this.state.avatarId);
+      const existingIndex = MEMBERS.findIndex(item => item.id === member.id);
+      if (existingIndex >= 0) MEMBERS[existingIndex] = member;
+      else MEMBERS.push(member);
+      this.set({ currentMember: member, resultId: member.c, avatarId: member.av, screen: "memberProfile" });
+    } catch (error) {
+      this.set({ screen: "saveError", error: error.message });
+    }
   },
 
   /* ---------- rendering ---------- */
   render() {
     const st = this.state;
-    const heroLevel = st.fromCodex ? 10 : Math.min(30, 6 + Math.round((st.bestScore || 6) * 1.4));
-    const hudRight = st.screen === "quiz" ? ("Q" + (st.qi + 1) + "/" + QS.length) : (st.screen === "result" ? ("LV." + heroLevel) : "LV.1");
+    const heroLevel = st.screen === "memberProfile" && st.currentMember ? st.currentMember.lv : (st.screen === "classDetail" ? 10 : Math.min(30, 6 + Math.round((st.bestScore || 6) * 1.4)));
+    const resultScreens = ["quizResult", "memberProfile", "classDetail"];
+    const hudRight = st.screen === "quiz" ? ("Q" + (st.qi + 1) + "/" + QS.length) : (resultScreens.includes(st.screen) ? ("LV." + heroLevel) : "LV.1");
     const homeBg = st.screen === "welcome" ? "#181236" : "#241c52";
     const homeFg = st.screen === "welcome" ? "#4b418a" : ACCENT;
 
@@ -160,9 +257,14 @@ const App = {
     if (st.screen === "welcome") body = this.renderWelcome();
     else if (st.screen === "avatar") body = this.renderAvatar();
     else if (st.screen === "quiz") body = this.renderQuiz();
-    else if (st.screen === "result") body = this.renderResult(heroLevel);
+    else if (st.screen === "quizResult") body = this.renderQuizResult(heroLevel);
+    else if (st.screen === "memberProfile") body = this.renderMemberProfile(heroLevel);
+    else if (st.screen === "classDetail") body = this.renderClassDetail(heroLevel);
     else if (st.screen === "codex") body = this.renderCodex();
     else if (st.screen === "roster") body = this.renderRoster();
+    else if (st.screen === "saving") body = this.renderStatus("SAVING...", "กำลังบันทึกอาชีพของคุณ");
+    else if (st.screen === "saveError") body = this.renderStatus("SAVE FAILED", st.error, true);
+    else if (st.screen === "error") body = this.renderStatus("LINK ERROR", st.error);
 
     const html = `
 <div style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;background:#0a0818;background-image:radial-gradient(circle at 20% 15%,#241a4a 0%,rgba(10,8,24,0) 55%),radial-gradient(circle at 82% 78%,#0f3b52 0%,rgba(10,8,24,0) 50%),linear-gradient(#0a0818,#0a0818);font-family:Kanit,system-ui,sans-serif;">
@@ -201,6 +303,8 @@ const App = {
   },
 
   renderWelcome() {
+    const memberHasClass = this.state.mode === "member" && this.state.currentMember && this.state.currentMember.c;
+    const primaryLabel = memberHasClass ? "ดูข้อมูลของท่าน" : "เลือกอาชีพ";
     return `
 <div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:34px 22px 40px;text-align:center;">
   <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#8b7ed8;letter-spacing:2px;margin-bottom:18px;">◆ CHAPTER 01 ◆</div>
@@ -212,7 +316,7 @@ const App = {
   <div style="margin-top:22px;font-size:15px;font-weight:500;color:#cfc6f5;line-height:1.7;">ยินดีต้อนรับสู่กิลด์นักผจญภัย INVESTMENT<br><span style="color:#8b7ed8;font-size:13px;">ตอบ 8 คำถาม แล้วมารับ “อาชีพ” ประจำตัวของคุณ</span></div>
 
   <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
-    <div class="btn btn-primary" onclick="App.goAvatar()" style="cursor:pointer;padding:15px 12px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 6px 0 #05030f;font-family:'Press Start 2P',monospace;font-size:11px;color:#211736;text-align:center;">▶ PRESS START</div>
+    <div class="btn btn-primary" onclick="App.goHomePrimary()" style="cursor:pointer;padding:15px 12px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 6px 0 #05030f;font-family:Kanit,sans-serif;font-weight:700;font-size:16px;color:#211736;text-align:center;">${primaryLabel}</div>
     <div class="btn btn-secondary" onclick="App.goCodex()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:14px;color:#cfc6f5;text-align:center;">ทำเนียบอาชีพทั้งหมด (${CLASSES.length})</div>
     <div class="btn btn-secondary" onclick="App.goRoster()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:14px;color:#cfc6f5;text-align:center;">สมาชิกในกิลด์ (${MEMBERS.length})</div>
   </div>
@@ -251,7 +355,7 @@ const App = {
 
   <div style="margin-top:20px;padding:14px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e;">
     <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#8b7ed8;">HERO NAME</div>
-    <input value="${esc(st.name)}" oninput="App.setName(this.value)" placeholder="พิมพ์ชื่อของคุณ" style="margin-top:10px;width:100%;padding:11px 10px;background:#0d0a22;border:3px solid #35296e;outline:none;color:#f4ecd8;font-family:Kanit,sans-serif;font-weight:600;font-size:15px;">
+    <input value="${esc(st.name)}" ${st.mode === "member" ? "readonly" : ""} oninput="App.setName(this.value)" placeholder="พิมพ์ชื่อของคุณ" style="margin-top:10px;width:100%;padding:11px 10px;background:#0d0a22;border:3px solid #35296e;outline:none;color:#f4ecd8;font-family:Kanit,sans-serif;font-weight:600;font-size:15px;">
   </div>
 
   <div style="margin-top:18px;display:flex;gap:10px;">
@@ -296,16 +400,23 @@ const App = {
 </div>`;
   },
 
-  renderResult(heroLevel) {
+  renderQuizResult(heroLevel) { return this.renderCareerPage(heroLevel); },
+  renderMemberProfile(heroLevel) { return this.renderCareerPage(heroLevel); },
+  renderClassDetail(heroLevel) { return this.renderCareerPage(heroLevel); },
+
+  renderCareerPage(heroLevel) {
     const st = this.state;
-    const cls = byId(CLASSES, st.resultId) || CLASSES[0];
-    const av = byId(AVATARS, st.avatarId);
+    const isClassDetail = st.screen === "classDetail";
+    const isMemberProfile = st.screen === "memberProfile";
+    const member = isMemberProfile ? st.currentMember : null;
+    const cls = byId(CLASSES, member ? member.c : st.resultId) || CLASSES[0];
+    const av = isClassDetail ? AVATARS[0] : (byId(AVATARS, member ? member.av : st.avatarId) || AVATARS[0]);
     const luck = st.luck || { die: 4, omen: OMENS[0], rolls: [] };
 
-    const resultTag = !st.fromCodex ? "QUEST COMPLETE"
-      : (st.prev === "roster" ? "◀ กลับรายชื่อสมาชิก"
-        : (st.prev === "result" && st.quizId ? "◀ กลับผลของฉัน" : "◀ กลับทำเนียบอาชีพ"));
-    const heroNameOut = st.fromCodex ? cls.th.split(" · ")[1] : (esc(st.name) || "นักผจญภัยไม่ระบุนาม");
+    const canGoBack = isClassDetail || (isMemberProfile && st.prev === "roster");
+    const resultTag = isClassDetail ? "◀ กลับหน้าก่อนหน้า" : (canGoBack ? "◀ กลับรายชื่อสมาชิก" : (isMemberProfile ? "MEMBER PROFILE" : "QUEST COMPLETE"));
+    const heroNameOut = isClassDetail ? cls.th.split(" · ")[1] : (esc(member ? member.n : st.name) || "นักผจญภัยไม่ระบุนาม");
+    const roleOut = member && member.r ? `<div style="margin-top:5px;font-size:12px;font-weight:600;color:rgba(13,10,34,.72);">${esc(member.r)}</div>` : "";
 
     const statListHtml = S.map(k => {
       const v = cls.st[k];
@@ -357,7 +468,7 @@ const App = {
   <div style="position:relative;padding:20px 18px 18px;background:${cls.color};border-bottom:5px solid #05030f;overflow:hidden;">
     <div style="position:absolute;inset:0;opacity:.22;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:10px 10px;"></div>
     <div style="position:relative;display:flex;align-items:center;justify-content:space-between;">
-      <div class="btn" onclick="App.resultBack()" style="cursor:${st.fromCodex ? "pointer" : "default"};font-family:Kanit,sans-serif;font-weight:600;font-size:12.5px;color:rgba(5,3,15,.7);">${resultTag}</div>
+      <div class="btn" onclick="App.resultBack()" style="cursor:${canGoBack ? "pointer" : "default"};font-family:Kanit,sans-serif;font-weight:600;font-size:12.5px;color:rgba(5,3,15,.7);">${resultTag}</div>
       <div class="btn" onclick="App.goCodex()" style="cursor:pointer;font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#05030f;">ทำเนียบ ▶</div>
     </div>
     <div style="position:relative;margin-top:12px;display:flex;align-items:flex-end;gap:14px;">
@@ -367,6 +478,7 @@ const App = {
       <div style="flex:1;min-width:0;padding-bottom:4px;">
         <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:rgba(5,3,15,.7);">LV.${heroLevel}</div>
         <div style="margin-top:5px;font-size:19px;font-weight:700;line-height:1.25;color:#0d0a22;text-wrap:balance;">${heroNameOut}</div>
+        ${roleOut}
         <div style="margin-top:4px;display:inline-block;padding:4px 8px;background:#0d0a22;font-family:'Press Start 2P',monospace;font-size:9px;color:${cls.color};">${av.name}</div>
       </div>
     </div>
@@ -437,7 +549,7 @@ const App = {
     </div>
 
     <div style="display:flex;flex-direction:column;gap:9px;margin-top:2px;">
-      <div class="btn btn-primary" onclick="App.restart()" style="cursor:pointer;padding:14px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-family:Kanit,sans-serif;font-weight:700;font-size:16px;color:#211736;">↺ ทำแบบทดสอบใหม่</div>
+      ${st.screen === "quizResult" ? `<div class="btn btn-primary" onclick="App.restart()" style="cursor:pointer;padding:14px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-family:Kanit,sans-serif;font-weight:700;font-size:16px;color:#211736;">↺ ทำแบบทดสอบใหม่</div>` : ""}
       <div class="btn btn-secondary" onclick="App.goCodex()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-weight:600;font-size:14px;color:#cfc6f5;">ดูอาชีพอื่นในกิลด์</div>
       <div class="btn btn-secondary" onclick="App.goRoster()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-weight:600;font-size:14px;color:#cfc6f5;">รายชื่อสมาชิกในกิลด์ (${MEMBERS.length})</div>
     </div>
@@ -475,10 +587,11 @@ const App = {
 
   renderRoster() {
     const st = this.state;
+    const averageLevel = MEMBERS.length ? Math.round(MEMBERS.reduce((total, member) => total + member.lv, 0) / MEMBERS.length) : 0;
     const rosterStats = [
       { n: MEMBERS.length, label: "สมาชิกทั้งหมด", color: ACCENT },
       { n: new Set(MEMBERS.map(m => m.c)).size, label: "สายอาชีพที่มี", color: "#3fd0c9" },
-      { n: Math.round(MEMBERS.reduce((a, m) => a + m.lv, 0) / MEMBERS.length), label: "เลเวลเฉลี่ย", color: "#e0508f" }
+      { n: averageLevel, label: "เลเวลเฉลี่ย", color: "#e0508f" }
     ];
     const statsHtml = rosterStats.map(rs => `
       <div style="padding:9px 8px;background:#1e1746;border:4px solid #05030f;text-align:center;">
@@ -501,7 +614,7 @@ const App = {
       const c = byId(CLASSES, m.c);
       const a = byId(AVATARS, m.av);
       return `
-      <div class="btn list-item" onclick="App.openClass('${m.c}')" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:10px 11px;background:#1e1746;border:4px solid #05030f;box-shadow:0 4px 0 #05030f;">
+      <div class="btn list-item" onclick="App.openMember('${m.id}')" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:10px 11px;background:#1e1746;border:4px solid #05030f;box-shadow:0 4px 0 #05030f;">
         <div style="flex:none;width:46px;height:46px;padding:2px;background:${a.bg};border:3px solid #05030f;overflow:hidden;">
           ${pixelAvatar(SHADOWS[m.av], 0.5)}
         </div>
@@ -518,6 +631,9 @@ const App = {
         </div>
       </div>`;
     }).join("");
+    const rosterNotice = st.rosterError
+      ? `<div style="margin-top:12px;padding:12px;background:#3d1526;border:3px solid #ff8fa3;font-size:13px;line-height:1.5;color:#ffd6de;">โหลดรายชื่อไม่สำเร็จ: ${esc(st.rosterError)}</div>`
+      : (!Api.ready ? `<div style="margin-top:12px;padding:12px;background:#241c52;border:3px solid #6a5fae;font-size:13px;line-height:1.5;color:#cfc6f5;">ยังไม่ได้ตั้งค่า Supabase จึงไม่สามารถแสดงรายชื่อสมาชิกได้</div>` : "");
 
     return `
 <div style="padding:18px 18px 34px;">
@@ -531,6 +647,7 @@ const App = {
 
   <div style="margin-top:14px;display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;">${filtersHtml}</div>
 
+  ${rosterNotice}
   <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">${membersHtml}</div>
 
   <div style="margin-top:16px;padding:12px;background:#0d0a22;border:3px dashed #2b2159;text-align:center;">
@@ -538,13 +655,22 @@ const App = {
     <div style="margin-top:7px;font-size:12.5px;color:#6a5fae;">ยังมีที่ว่างในปาร์ตี้ — ชวนเพื่อนมาทำแบบทดสอบ</div>
   </div>
 </div>`;
+  },
+
+  renderStatus(title, message, retry) {
+    return `
+<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;">
+  <div style="font-family:'Press Start 2P',monospace;font-size:13px;color:${retry ? "#ff8fa3" : ACCENT};">${title}</div>
+  <div style="margin-top:16px;font-size:14px;line-height:1.7;color:#cfc6f5;">${esc(message || "กรุณาลองอีกครั้ง")}</div>
+  ${retry ? `<div class="btn btn-primary" onclick="App.retrySave()" style="margin-top:20px;padding:12px 18px;background:${ACCENT};border:4px solid #05030f;color:#211736;font-weight:700;">ลองบันทึกอีกครั้ง</div>` : ""}
+</div>`;
   }
 };
 
 /* ---------- data loading ---------- */
 async function loadData() {
-  const [avatarsData, classesData, quizData, luckData, membersData] = await Promise.all(
-    ["data/avatars.json", "data/classes.json", "data/quiz.json", "data/luck.json", "data/members.json"]
+  const [avatarsData, classesData, quizData, luckData] = await Promise.all(
+    ["data/avatars.json", "data/classes.json", "data/quiz.json", "data/luck.json"]
       .map(url => fetch(url).then(r => {
         if (!r.ok) throw new Error("Failed to load " + url + " (" + r.status + ")");
         return r.json();
@@ -561,9 +687,34 @@ async function loadData() {
   QS = quizData.questions;
   OMENS = luckData.omens;
   ROLLS = luckData.rolls;
-  MEMBERS = membersData;
+  MEMBERS = [];
 
   AVATARS.forEach(a => SHADOWS[a.id] = shadowFor(a));
+  if (Api.ready) {
+    try {
+      MEMBERS = await Api.listMembers();
+    } catch (error) {
+      App.state.rosterError = error.message;
+    }
+  }
+
+  const memberId = new URLSearchParams(location.search).get("id");
+  if (!memberId) {
+    Object.assign(App.state, { screen: "welcome", mode: "guest" });
+  } else if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(memberId)) {
+    Object.assign(App.state, { screen: "error", error: "รูปแบบ ID ในลิงก์ไม่ถูกต้อง" });
+  } else if (!Api.ready) {
+    Object.assign(App.state, { screen: "error", error: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Supabase" });
+  } else {
+    const member = await Api.getMember(memberId);
+    if (!member) {
+      Object.assign(App.state, { screen: "error", error: "ไม่พบสมาชิกสำหรับลิงก์นี้" });
+    } else if (member.c) {
+      Object.assign(App.state, { screen: "welcome", mode: "member", memberId, currentMember: member, resultId: member.c, avatarId: member.av, name: member.n, luck: App.rollLuck() });
+    } else {
+      Object.assign(App.state, { screen: "welcome", mode: "member", memberId, currentMember: member, avatarId: member.av || "a1", name: member.n });
+    }
+  }
   App.render();
 }
 
