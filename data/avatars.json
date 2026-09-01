@@ -1,0 +1,28 @@
+{
+  "hairs": {
+    "a": ["....hhhhhh....", "..hhhhhhhhhh..", ".hhhhhhhhhhhh."],
+    "b": ["..h..hhhh..h..", ".hhh.hhhhh.hhh", ".hhhhhhhhhhhh."],
+    "c": ["...hhhhhhhh...", "..hhhhhhhhhh..", ".hhhhhhhhhhhh."]
+  },
+  "body": [
+    ".hhsssssssshh.",
+    ".hsssssssssss.",
+    ".hsseesseessh.",
+    ".hssssssssssh.",
+    "..hsssmmsssh..",
+    "...hssssssh...",
+    "....ssssss....",
+    "..cccccccccc..",
+    ".ccccaaaacccc.",
+    ".ccc.aaaa.ccc.",
+    ".cc..aaaa..cc."
+  ],
+  "avatars": [
+    { "id": "a1", "name": "PIX",    "hair": "a", "h": "#e0508f", "s": "#f2c79a", "c": "#3fd0c9", "a": "#f2b73d", "bg": "#2a1f4f" },
+    { "id": "a2", "name": "NOVA",   "hair": "b", "h": "#7bd44a", "s": "#d99b6c", "c": "#6b5ce0", "a": "#f4ecd8", "bg": "#1f2a4f" },
+    { "id": "a3", "name": "BASIL",  "hair": "c", "h": "#6cc6f2", "s": "#f2c79a", "c": "#e0483d", "a": "#f2b73d", "bg": "#25204a" },
+    { "id": "a4", "name": "TOFU",   "hair": "a", "h": "#f2b73d", "s": "#a9714a", "c": "#2a8f7a", "a": "#f4ecd8", "bg": "#2c2247" },
+    { "id": "a5", "name": "MOCHI",  "hair": "b", "h": "#b98cf2", "s": "#f2d9c0", "c": "#1f3a8f", "a": "#6cc6f2", "bg": "#221c4d" },
+    { "id": "a6", "name": "GINGER", "hair": "c", "h": "#f4ecd8", "s": "#8a5a3a", "c": "#c23b6b", "a": "#f2b73d", "bg": "#2a1c3f" }
+  ]
+}
