@@ -120,6 +120,7 @@ const Api = {
       r: member.role,
       c: member.class_id,
       av: member.avatar_id,
+      pi: member.profile_img,
       lv: member.level,
       joinedAt: member.joined_at
     };
@@ -439,6 +440,7 @@ const App = {
 
   renderAvatar() {
     const st = this.state;
+    const profileImg = st.mode === "member" && st.currentMember && st.currentMember.pi;
     const avatarsHtml = AVATARS.map(a => {
       const border = a.id === st.avatarId ? ACCENT : "#05030f";
       const label = a.id === st.avatarId ? ACCENT : "#8b7ed8";
@@ -449,6 +451,16 @@ const App = {
       </div>`;
     }).join("");
 
+    const pickerHtml = profileImg ? `
+  <div style="margin-top:18px;display:flex;justify-content:center;">
+    <div style="padding:8px;background:#1e1746;border:4px solid ${ACCENT};box-shadow:0 5px 0 #05030f,inset 0 0 0 3px #35296e;">
+      <img src="${esc(profileImg)}" alt="" style="display:block;width:150px;height:150px;object-fit:cover;background:#0d0a22;">
+    </div>
+  </div>` : `
+  <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+    ${avatarsHtml}
+  </div>`;
+
     const welcomeHtml = st.memberId ? `
   <div style="margin-top:14px;padding:12px 14px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 5px 0 #05030f;">
     <div style="font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#211736;">ยินดีต้อนรับ คุณ ${esc(st.name)}</div>
@@ -457,12 +469,9 @@ const App = {
     return `
 <div style="padding:20px 18px 30px;">
   <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">CREATE HERO</div>
-  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">เลือกอวาตาร์และตั้งชื่อในกิลด์</div>
+  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">${profileImg ? "ตั้งชื่อในกิลด์" : "เลือกอวาตาร์และตั้งชื่อในกิลด์"}</div>
   ${welcomeHtml}
-
-  <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-    ${avatarsHtml}
-  </div>
+  ${pickerHtml}
 
   <div style="margin-top:20px;padding:14px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e;">
     <div style="font-family:'Press Start 2P',monospace;font-size:14px;color:#8b7ed8;">ฉายาของท่าน</div>
@@ -543,6 +552,7 @@ const App = {
     const member = isMemberProfile ? st.currentMember : null;
     const cls = byId(CLASSES, member ? member.c : st.resultId) || CLASSES[0];
     const av = isClassDetail ? AVATARS[0] : (byId(AVATARS, member ? member.av : st.avatarId) || AVATARS[0]);
+    const profileImg = isMemberProfile && member && member.pi;
     const luck = st.luck || { die: 4, omen: OMENS[0], rolls: [] };
 
     const canGoBack = isClassDetail || (isMemberProfile && st.prev === "roster");
@@ -605,13 +615,13 @@ const App = {
     </div>
     <div style="position:relative;margin-top:12px;display:flex;align-items:flex-end;gap:14px;">
       <div style="position:relative;flex:none;width:104px;height:104px;padding:8px;background:rgba(5,3,15,.28);border:4px solid #05030f;animation:bob 2.8s ease-in-out infinite;">
-        ${pixelAvatar(SHADOWS[av.id])}
+        ${profileImg ? `<img src="${esc(profileImg)}" alt="" style="display:block;width:100%;height:100%;object-fit:cover;">` : pixelAvatar(SHADOWS[av.id])}
       </div>
       <div style="flex:1;min-width:0;padding-bottom:4px;">
         <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:rgba(5,3,15,.7);">LV.${heroLevel}</div>
         <div style="margin-top:5px;font-size:19px;font-weight:700;line-height:1.25;color:#0d0a22;text-wrap:balance;">${heroNameOut}</div>
         ${roleOut}
-        <div style="margin-top:4px;display:inline-block;padding:4px 8px;background:#0d0a22;font-family:'Press Start 2P',monospace;font-size:9px;color:${cls.color};">${av.name}</div>
+        ${profileImg ? "" : `<div style="margin-top:4px;display:inline-block;padding:4px 8px;background:#0d0a22;font-family:'Press Start 2P',monospace;font-size:9px;color:${cls.color};">${av.name}</div>`}
       </div>
     </div>
     <div style="position:relative;margin-top:12px;font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.6;color:#0d0a22;text-shadow:2px 2px 0 rgba(255,255,255,.35);">${cls.en}</div>

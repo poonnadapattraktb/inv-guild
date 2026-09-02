@@ -27,6 +27,26 @@ const assignedRow = {
   level: 12
 };
 
+const photoPendingRow = {
+  id: "Pp4Qq5Rr",
+  name: "Photo Pending",
+  role: "Engineer",
+  class_id: null,
+  avatar_id: null,
+  profile_img: "https://example.com/photo-pending.jpg",
+  level: 1
+};
+
+const photoAssignedRow = {
+  id: "Pp6Qq7Ss",
+  name: "Photo Assigned",
+  role: "Designer",
+  class_id: "pm",
+  avatar_id: "a2",
+  profile_img: "https://example.com/photo-assigned.jpg",
+  level: 12
+};
+
 function response(data, ok = true, status = ok ? 200 : 500) {
   return { ok, status, json: async () => data };
 }
@@ -73,6 +93,8 @@ async function boot(search, memberRow, pathname = "/inv-guild/") {
       calls.push({ type: "get", id });
       if (id === pendingRow.id) return response(pendingRow);
       if (id === assignedRow.id) return response(assignedRow);
+      if (id === photoPendingRow.id) return response(photoPendingRow);
+      if (id === photoAssignedRow.id) return response(photoAssignedRow);
       return response({ message: "not found" }, false, 406);
     },
     setTimeout,
@@ -138,6 +160,17 @@ async function run() {
   assigned.App.openClass("pm");
   assert.equal(assigned.App.state.screen, "classDetail");
   assert.doesNotMatch(assigned.appElement.innerHTML, /Assigned Member|Product Owner/);
+
+  const photoPending = await boot("?id=" + photoPendingRow.id, photoPendingRow);
+  photoPending.App.goHomePrimary();
+  assert.equal(photoPending.App.state.screen, "avatar");
+  assert.match(photoPending.appElement.innerHTML, new RegExp(`<img src="${photoPendingRow.profile_img}"`));
+  assert.doesNotMatch(photoPending.appElement.innerHTML, /avatar-pick/);
+
+  const photoAssigned = await boot("?id=" + photoAssignedRow.id, photoAssignedRow);
+  photoAssigned.App.goHomePrimary();
+  assert.equal(photoAssigned.App.state.screen, "memberProfile");
+  assert.match(photoAssigned.appElement.innerHTML, new RegExp(`<img src="${photoAssignedRow.profile_img}"`));
 
   const missing = await boot("?id=Missing9", null);
   assert.equal(missing.App.state.screen, "error");
