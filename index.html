@@ -72,17 +72,38 @@ function esc(str) {
   return String(str).replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
 }
 
+function xorDecode(base64, key) {
+  const bytes = atob(base64);
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) {
+    out += String.fromCharCode(bytes.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return out;
+}
+
 const Api = {
   config: window.INV_GUILD_CONFIG || {},
 
-  get ready() { return Boolean(this.config.supabaseUrl && this.config.supabasePublishableKey); },
+  get decodeKey() {
+    return new URLSearchParams(location.search).get("ac") || "";
+  },
+
+  get supabaseKey() {
+    if (this.config.supabasePublishableKey) return this.config.supabasePublishableKey;
+    const encoded = this.config.supabasePublishableKeyEncoded;
+    const key = this.decodeKey;
+    if (!encoded || !key) return "";
+    try { return xorDecode(encoded, key); } catch (e) { return ""; }
+  },
+
+  get ready() { return Boolean(this.config.supabaseUrl && this.supabaseKey); },
 
   get restUrl() { return this.config.supabaseUrl.replace(/\/$/, "") + "/rest/v1"; },
 
   headers(extra) {
     return Object.assign({
-      apikey: this.config.supabasePublishableKey,
-      Authorization: "Bearer " + this.config.supabasePublishableKey
+      apikey: this.supabaseKey,
+      Authorization: "Bearer " + this.supabaseKey
     }, extra || {});
   },
 

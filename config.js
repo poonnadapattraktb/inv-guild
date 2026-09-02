@@ -1,4 +1,4 @@
 window.INV_GUILD_CONFIG = {
   supabaseUrl: "https://taszzwizzypovqyesvys.supabase.co",
-  supabasePublishableKey: "sb_publishable_voX7uoj6EASidyfVu6EyAg_S4EivbWm"
+  supabasePublishableKeyEncoded: "QgY8SRcEDg9CDAJbDgM9EF48VEwNDFQjcDcKXRsANBMHIRp4BTkxUnQNFVs1Cw=="
 };
