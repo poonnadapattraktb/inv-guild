@@ -10,7 +10,7 @@ const appSource = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)
   .find(source => source.includes("const App ="));
 
 const pendingRow = {
-  id: "20000000-0000-4000-8000-000000000001",
+  id: "Uk8a1FT9",
   name: "Pending Member",
   role: "Engineer",
   class_id: null,
@@ -19,7 +19,7 @@ const pendingRow = {
 };
 
 const assignedRow = {
-  id: "20000000-0000-4000-8000-000000000002",
+  id: "Aa2Bb3Cc",
   name: "Assigned Member",
   role: "Product Owner",
   class_id: "pm",
@@ -139,9 +139,13 @@ async function run() {
   assert.equal(assigned.App.state.screen, "classDetail");
   assert.doesNotMatch(assigned.appElement.innerHTML, /Assigned Member|Product Owner/);
 
-  const missing = await boot("?id=20000000-0000-4000-8000-000000000099", null);
+  const missing = await boot("?id=Missing9", null);
   assert.equal(missing.App.state.screen, "error");
   assert.match(missing.appElement.innerHTML, /ไม่พบสมาชิก/);
+
+  const invalid = await boot("?id=eq." + pendingRow.id, null);
+  assert.equal(invalid.App.state.screen, "error");
+  assert.match(invalid.appElement.innerHTML, /รูปแบบ ID/);
 
   console.log("smoke tests: OK");
 }

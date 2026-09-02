@@ -29,4 +29,4 @@ console.log("ac param (ใส่ใน invite URL):");
 console.log("  ac=" + decodeKey);
 console.log("");
 console.log("ตัวอย่าง URL เต็ม:");
-console.log("  /inv-guild/?id=<member-uuid>&ac=" + decodeKey);
+console.log("  /inv-guild/?id=<member-nano-id>&ac=" + decodeKey);

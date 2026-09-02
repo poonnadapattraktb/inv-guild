@@ -833,7 +833,7 @@ async function loadData() {
   const memberId = new URLSearchParams(location.search).get("id");
   if (!memberId) {
     Object.assign(App.state, { screen: "welcome", mode: "guest" });
-  } else if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(memberId)) {
+  } else if (!/^[A-Za-z0-9_-]{8,21}$/.test(memberId)) {
     Object.assign(App.state, { screen: "error", error: "รูปแบบ ID ในลิงก์ไม่ถูกต้อง" });
   } else if (!Api.ready) {
     Object.assign(App.state, { screen: "error", error: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Supabase" });
