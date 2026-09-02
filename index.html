@@ -116,10 +116,12 @@ const Api = {
     return {
       id: member.id,
       n: member.name,
+      nick: member.nickname,
       r: member.role,
       c: member.class_id,
       av: member.avatar_id,
-      lv: member.level
+      lv: member.level,
+      joinedAt: member.joined_at
     };
   },
 
@@ -141,7 +143,7 @@ const Api = {
     return rows.map(row => this.normalize(row));
   },
 
-  async assignMember(id, classId, avatarId) {
+  async assignMember(id, classId, avatarId, nickname, joinedAt) {
     const response = await fetch(this.restUrl + "/members?id=eq." + encodeURIComponent(id), {
       method: "PATCH",
       headers: this.headers({
@@ -151,7 +153,9 @@ const Api = {
       body: JSON.stringify({
         class_id: classId,
         avatar_id: avatarId,
-        assigned_at: new Date().toISOString()
+        assigned_at: new Date().toISOString(),
+        nickname: (nickname || "").trim() || null,
+        joined_at: joinedAt || null
       })
     });
     if (!response.ok) throw await this.errorFrom(response);
@@ -170,6 +174,25 @@ function pixelAvatar(shadow, scale) {
   return '<div style="' + style + '"><div style="position:absolute;top:0;left:0;width:6px;height:6px;box-shadow:' + shadow + ';"></div></div>';
 }
 
+function calculateLevel(joinedYear) {
+  const years = Math.max(0, new Date().getFullYear() - joinedYear);
+  return 70 + Math.min(29, years * 4);
+}
+
+function normalizeJoinYear(raw) {
+  const n = Number(String(raw ?? "").trim());
+  if (!raw || !Number.isInteger(n)) return { error: "กรุณากรอกปีเป็นตัวเลข" };
+  const ceYear = n > 2400 ? n - 543 : n;
+  const current = new Date().getFullYear();
+  if (ceYear > current) return { error: "ปีเข้าทำงานต้องไม่เป็นอนาคต" };
+  if (ceYear < current - 60) return { error: "ปีเข้าทำงานเก่าเกินไป กรุณาตรวจสอบอีกครั้ง" };
+  return { year: ceYear };
+}
+
+function effectiveLevel(member) {
+  return member.joinedAt ? calculateLevel(member.joinedAt) : member.lv;
+}
+
 /* ---------- app state + logic ---------- */
 const App = {
   state: {
@@ -179,6 +202,10 @@ const App = {
     currentMember: null,
     avatarId: "a1",
     name: "",
+    nickname: "",
+    joinedAt: null,
+    joinYearInput: "",
+    joinYearError: null,
     qi: 0,
     answers: [],
     resultId: null,
@@ -216,6 +243,28 @@ const App = {
       this.goAvatar();
     }
   },
+  playAsGuest() {
+    this.set({
+      screen: "avatar",
+      mode: "guest",
+      memberId: null,
+      currentMember: null,
+      avatarId: "a1",
+      name: "",
+      nickname: "",
+      joinedAt: null,
+      joinYearInput: "",
+      joinYearError: null,
+      qi: 0,
+      answers: [],
+      resultId: null,
+      prev: null,
+      quizId: null,
+      bestScore: 0,
+      luck: null,
+      error: null
+    });
+  },
   goCodex() { this.set({ screen: "codex", prev: this.state.screen }); },
   codexBack() { this.set({ screen: this.state.prev || "welcome" }); },
   goRoster() { this.set({ screen: "roster", prev: this.state.screen }); },
@@ -225,6 +274,7 @@ const App = {
   prevQ() { this.state.qi === 0 ? this.set({ screen: "avatar" }) : this.set({ qi: this.state.qi - 1 }); },
   rerollLuck() { this.set({ luck: this.rollLuck() }); },
   setName(v) { this.state.name = v; },
+  setNickname(v) { this.state.nickname = v; },
   pickAvatar(id) { this.set({ avatarId: id }); },
   setFilter(id) { this.set({ filter: id }); },
 
@@ -237,17 +287,26 @@ const App = {
       answers.forEach(a => { if (!a) return; Object.keys(a).forEach(k => score[k] = (score[k] || 0) + a[k]); });
       let best = CLASSES[0].id, bv = -1;
       CLASSES.forEach(c => { if ((score[c.id] || 0) > bv) { bv = score[c.id] || 0; best = c.id; } });
-      const result = { answers, resultId: best, quizId: best, bestScore: bv, luck: this.rollLuck() };
-      if (this.state.mode === "guest") {
-        this.set(Object.assign(result, { screen: "quizResult" }));
-        return;
-      }
-
-      Object.assign(this.state, result);
-      await this.saveAssignment(best);
+      this.set({ answers, resultId: best, quizId: best, bestScore: bv, screen: "joinYear", joinYearInput: "", joinYearError: null });
     } else {
       this.set({ answers, qi: qi + 1 });
     }
+  },
+
+  setJoinYearInput(v) { this.set({ joinYearInput: v, joinYearError: null }); },
+
+  async confirmJoinYear() {
+    const parsed = normalizeJoinYear(this.state.joinYearInput);
+    if (parsed.error) { this.set({ joinYearError: parsed.error }); return; }
+
+    const result = { joinedAt: parsed.year, luck: this.rollLuck() };
+    if (this.state.mode === "guest") {
+      this.set(Object.assign(result, { screen: "quizResult" }));
+      return;
+    }
+
+    Object.assign(this.state, result);
+    await this.saveAssignment(this.state.resultId);
   },
 
   openClass(id) {
@@ -273,7 +332,7 @@ const App = {
   async saveAssignment(classId) {
     this.set({ screen: "saving", error: null });
     try {
-      const member = await Api.assignMember(this.state.memberId, classId, this.state.avatarId);
+      const member = await Api.assignMember(this.state.memberId, classId, this.state.avatarId, this.state.nickname, this.state.joinedAt);
       const existingIndex = MEMBERS.findIndex(item => item.id === member.id);
       if (existingIndex >= 0) MEMBERS[existingIndex] = member;
       else MEMBERS.push(member);
@@ -286,7 +345,9 @@ const App = {
   /* ---------- rendering ---------- */
   render() {
     const st = this.state;
-    const heroLevel = st.screen === "memberProfile" && st.currentMember ? st.currentMember.lv : (st.screen === "classDetail" ? 10 : Math.min(30, 6 + Math.round((st.bestScore || 6) * 1.4)));
+    const heroLevel = st.screen === "memberProfile" && st.currentMember
+      ? effectiveLevel(st.currentMember)
+      : (st.screen === "classDetail" ? 10 : (st.joinedAt ? calculateLevel(st.joinedAt) : Math.min(30, 6 + Math.round((st.bestScore || 6) * 1.4))));
     const resultScreens = ["quizResult", "memberProfile", "classDetail"];
     const hudRight = st.screen === "quiz" ? ("Q" + (st.qi + 1) + "/" + QS.length) : (resultScreens.includes(st.screen) ? ("LV." + heroLevel) : "LV.1");
     const homeBg = st.screen === "welcome" ? "#181236" : "#241c52";
@@ -296,6 +357,7 @@ const App = {
     if (st.screen === "welcome") body = this.renderWelcome();
     else if (st.screen === "avatar") body = this.renderAvatar();
     else if (st.screen === "quiz") body = this.renderQuiz();
+    else if (st.screen === "joinYear") body = this.renderJoinYear();
     else if (st.screen === "quizResult") body = this.renderQuizResult(heroLevel);
     else if (st.screen === "memberProfile") body = this.renderMemberProfile(heroLevel);
     else if (st.screen === "classDetail") body = this.renderClassDetail(heroLevel);
@@ -344,8 +406,12 @@ const App = {
   renderWelcome() {
     const memberHasClass = this.state.mode === "member" && this.state.currentMember && this.state.currentMember.c;
     const primaryLabel = memberHasClass ? "ดูข้อมูลของท่าน" : "เลือกอาชีพ";
+    const guestButton = this.state.mode === "member"
+      ? '<div class="btn btn-secondary" onclick="App.playAsGuest()" style="cursor:pointer;position:absolute;top:14px;right:14px;padding:7px 9px;background:#241c52;border:3px solid #05030f;box-shadow:0 3px 0 #05030f;font-family:\'Press Start 2P\',monospace;font-size:7px;color:#cfc6f5;">GUEST MODE</div>'
+      : "";
     return `
-<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:34px 22px 40px;text-align:center;">
+<div style="position:relative;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:34px 22px 40px;text-align:center;">
+  ${guestButton}
   <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#8b7ed8;letter-spacing:2px;margin-bottom:18px;">◆ CHAPTER 01 ◆</div>
   <div style="position:relative;padding:20px 18px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e,8px 8px 0 rgba(0,0,0,.45);overflow:hidden;">
     <div style="position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);animation:shine 3.4s linear infinite;"></div>
@@ -383,18 +449,24 @@ const App = {
       </div>`;
     }).join("");
 
+    const welcomeHtml = st.memberId ? `
+  <div style="margin-top:14px;padding:12px 14px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 5px 0 #05030f;">
+    <div style="font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#211736;">ยินดีต้อนรับ คุณ ${esc(st.name)}</div>
+  </div>` : "";
+
     return `
 <div style="padding:20px 18px 30px;">
   <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">CREATE HERO</div>
   <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">เลือกอวาตาร์และตั้งชื่อในกิลด์</div>
+  ${welcomeHtml}
 
   <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
     ${avatarsHtml}
   </div>
 
   <div style="margin-top:20px;padding:14px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#8b7ed8;">HERO NAME</div>
-    <input value="${esc(st.name)}" ${st.mode === "member" ? "readonly" : ""} oninput="App.setName(this.value)" placeholder="พิมพ์ชื่อของคุณ" style="margin-top:10px;width:100%;padding:11px 10px;background:#0d0a22;border:3px solid #35296e;outline:none;color:#f4ecd8;font-family:Kanit,sans-serif;font-weight:600;font-size:15px;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:14px;color:#8b7ed8;">ฉายาของท่าน</div>
+    <input value="${esc(st.nickname)}" oninput="App.setNickname(this.value)" placeholder="...." style="margin-top:10px;width:100%;padding:11px 10px;background:#0d0a22;border:3px solid #35296e;outline:none;color:#f4ecd8;font-family:Kanit,sans-serif;font-weight:600;font-size:15px;">
   </div>
 
   <div style="margin-top:18px;display:flex;gap:10px;">
@@ -439,6 +511,27 @@ const App = {
 </div>`;
   },
 
+  renderJoinYear() {
+    const st = this.state;
+    const errorHtml = st.joinYearError ? `<div style="margin-top:8px;font-size:12.5px;color:#e0508f;">${esc(st.joinYearError)}</div>` : "";
+
+    return `
+<div style="padding:20px 18px 30px;">
+  <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">TENURE CHECK</div>
+  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">เข้าทำงานปีอะไร? (คำถามนี้ไม่มีผลต่อการเลือกอาชีพ)</div>
+
+  <div style="margin-top:18px;padding:14px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#8b7ed8;">ปีที่เข้าทำงาน (พ.ศ. หรือ ค.ศ. ก็ได้)</div>
+    <input type="number" value="${esc(st.joinYearInput)}" oninput="App.setJoinYearInput(this.value)" placeholder="เช่น 2565 หรือ 2022" style="margin-top:10px;width:100%;padding:11px 10px;background:#0d0a22;border:3px solid #35296e;outline:none;color:#f4ecd8;font-family:Kanit,sans-serif;font-weight:600;font-size:15px;">
+    ${errorHtml}
+  </div>
+
+  <div style="margin-top:18px;display:flex;gap:10px;">
+    <div class="btn btn-primary" onclick="App.confirmJoinYear()" style="cursor:pointer;flex:1;padding:14px 12px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 5px 0 #05030f;font-family:Kanit,sans-serif;font-weight:700;font-size:16px;color:#211736;text-align:center;">ยืนยัน</div>
+  </div>
+</div>`;
+  },
+
   renderQuizResult(heroLevel) { return this.renderCareerPage(heroLevel); },
   renderMemberProfile(heroLevel) { return this.renderCareerPage(heroLevel); },
   renderClassDetail(heroLevel) { return this.renderCareerPage(heroLevel); },
@@ -454,7 +547,7 @@ const App = {
 
     const canGoBack = isClassDetail || (isMemberProfile && st.prev === "roster");
     const resultTag = isClassDetail ? "◀ กลับหน้าก่อนหน้า" : (canGoBack ? "◀ กลับรายชื่อสมาชิก" : (isMemberProfile ? "MEMBER PROFILE" : "QUEST COMPLETE"));
-    const heroNameOut = isClassDetail ? cls.th.split(" · ")[1] : (esc(member ? member.n : st.name) || "นักผจญภัยไม่ระบุนาม");
+    const heroNameOut = isClassDetail ? cls.th.split(" · ")[1] : (esc(member ? (member.nick || member.n) : st.nickname) || "นักผจญภัยไม่ระบุนาม");
     const roleOut = member && member.r ? `<div style="margin-top:5px;font-size:12px;font-weight:600;color:rgba(13,10,34,.72);">${esc(member.r)}</div>` : "";
 
     const statListHtml = S.map(k => {
@@ -626,7 +719,7 @@ const App = {
 
   renderRoster() {
     const st = this.state;
-    const averageLevel = MEMBERS.length ? Math.round(MEMBERS.reduce((total, member) => total + member.lv, 0) / MEMBERS.length) : 0;
+    const averageLevel = MEMBERS.length ? Math.round(MEMBERS.reduce((total, member) => total + effectiveLevel(member), 0) / MEMBERS.length) : 0;
     const rosterStats = [
       { n: MEMBERS.length, label: "สมาชิกทั้งหมด", color: ACCENT },
       { n: new Set(MEMBERS.map(m => m.c)).size, label: "สายอาชีพที่มี", color: "#3fd0c9" },
@@ -660,7 +753,7 @@ const App = {
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:7px;">
             <span style="font-size:15px;font-weight:600;color:#f4ecd8;">${m.n}</span>
-            <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#6a5fae;">LV.${m.lv}</span>
+            <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#6a5fae;">LV.${effectiveLevel(m)}</span>
           </div>
           <div style="margin-top:4px;font-size:12.5px;color:#9d92d6;">${m.r}</div>
         </div>
@@ -749,9 +842,9 @@ async function loadData() {
     if (!member) {
       Object.assign(App.state, { screen: "error", error: "ไม่พบสมาชิกสำหรับลิงก์นี้" });
     } else if (member.c) {
-      Object.assign(App.state, { screen: "welcome", mode: "member", memberId, currentMember: member, resultId: member.c, avatarId: member.av, name: member.n, luck: App.rollLuck() });
+      Object.assign(App.state, { screen: "welcome", mode: "member", memberId, currentMember: member, resultId: member.c, avatarId: member.av, name: member.n, nickname: member.nick || "", luck: App.rollLuck() });
     } else {
-      Object.assign(App.state, { screen: "welcome", mode: "member", memberId, currentMember: member, avatarId: member.av || "a1", name: member.n });
+      Object.assign(App.state, { screen: "welcome", mode: "member", memberId, currentMember: member, avatarId: member.av || "a1", name: member.n, nickname: member.nick || "" });
     }
   }
   App.render();

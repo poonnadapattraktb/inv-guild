@@ -97,13 +97,34 @@ async function run() {
   assert.equal(pending.App.state.screen, "welcome");
   assert.equal(pending.App.state.mode, "member");
   assert.match(pending.appElement.innerHTML, /เลือกอาชีพ/);
-  pending.App.goHomePrimary();
+  assert.match(pending.appElement.innerHTML, /GUEST MODE/);
+  pending.App.playAsGuest();
+  assert.equal(pending.App.state.mode, "guest");
+  assert.equal(pending.App.state.memberId, null);
   assert.equal(pending.App.state.screen, "avatar");
-  assert.match(pending.appElement.innerHTML, /readonly/);
-  pending.App.state.qi = 7;
-  await pending.App.answer(7, 0);
-  assert.equal(pending.App.state.screen, "memberProfile");
-  assert.equal(pending.calls.filter(call => call.type === "assign").length, 1);
+
+  const pendingAssignment = await boot("?id=" + pendingRow.id, pendingRow);
+  pendingAssignment.App.goHomePrimary();
+  assert.equal(pendingAssignment.App.state.screen, "avatar");
+  assert.doesNotMatch(pendingAssignment.appElement.innerHTML, /readonly/);
+  pendingAssignment.App.setNickname("ป๊อกแป๊ก");
+  pendingAssignment.App.state.qi = 7;
+  await pendingAssignment.App.answer(7, 0);
+  assert.equal(pendingAssignment.App.state.screen, "joinYear");
+
+  const futureYear = new Date().getFullYear() + 1;
+  pendingAssignment.App.setJoinYearInput(String(futureYear));
+  await pendingAssignment.App.confirmJoinYear();
+  assert.equal(pendingAssignment.App.state.screen, "joinYear");
+  assert.ok(pendingAssignment.App.state.joinYearError);
+
+  pendingAssignment.App.setJoinYearInput("2565"); // พ.ศ. 2565 -> ค.ศ. 2022
+  await pendingAssignment.App.confirmJoinYear();
+  assert.equal(pendingAssignment.App.state.screen, "memberProfile");
+  const assignCalls = pendingAssignment.calls.filter(call => call.type === "assign");
+  assert.equal(assignCalls.length, 1);
+  assert.equal(assignCalls[0].body.nickname, "ป๊อกแป๊ก");
+  assert.equal(assignCalls[0].body.joined_at, 2022);
 
   const assigned = await boot("?id=" + assignedRow.id, assignedRow);
   assert.equal(assigned.App.state.screen, "welcome");
