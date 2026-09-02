@@ -5,18 +5,18 @@
 ## URL และพฤติกรรม
 
 - ทุก URL เริ่มต้นที่หน้า Home
-- `https://inv.com/` เป็น guest และมีปุ่ม `เลือกอาชีพ` เสมอ ผลแบบทดสอบจะไม่ถูกบันทึก
-- `https://inv.com/?id=<UUID>` เปิดลิงก์เฉพาะสมาชิก
+- `https://poonnadapattraktb.github.io/inv-guild/` เป็น guest และมีปุ่ม `เลือกอาชีพ` เสมอ ผลแบบทดสอบจะไม่ถูกบันทึก
+- `https://poonnadapattraktb.github.io/inv-guild/?id=<UUID>` เปิดลิงก์เฉพาะสมาชิก
 - สมาชิกที่ยังไม่มีอาชีพจะเห็นปุ่ม `เลือกอาชีพ` เพื่อเลือก avatar และทำแบบทดสอบได้หนึ่งครั้ง
 - สมาชิกที่มีอาชีพแล้วจะเห็นปุ่ม `ดูข้อมูลของท่าน` เพื่อเปิดหน้าโปรไฟล์ และไม่มีปุ่มทำแบบทดสอบใหม่
 - ทำเนียบอาชีพแสดงข้อมูลอาชีพทั่วไป ส่วน Guild Roster เปิดโปรไฟล์ของสมาชิก
 
-ใช้ query parameter แทน path `/id` เพราะ GitHub Pages ไม่มี rewrite rule สำหรับ SPA เมื่อเปิด deep link หรือ refresh
+ใช้ query parameter ต่อท้าย GitHub Pages project root โดยตรง หน้า `index.html` จะถูกเปิดให้อัตโนมัติ ห้ามใช้ path `/id` เพราะ GitHub Pages project site ไม่มี rewrite rule สำหรับ SPA
 
 ## ตั้งค่า Supabase
 
 1. สร้าง Supabase project
-2. เปิด SQL Editor แล้วรัน [supabase/migrations/001_members.sql](supabase/migrations/001_members.sql)
+2. เปิด SQL Editor แล้วรันตามลำดับ [supabase/migrations/001_members.sql](supabase/migrations/001_members.sql) และ [supabase/migrations/002_direct_rest_api.sql](supabase/migrations/002_direct_rest_api.sql)
 3. นำ Project URL และ publishable key ใส่ใน [config.js](config.js):
 
 ```js
@@ -26,7 +26,7 @@ window.INV_GUILD_CONFIG = {
 };
 ```
 
-Publishable key สามารถอยู่ใน GitHub Pages ได้ ห้ามใส่ secret key โดยเด็ดขาด การป้องกันข้อมูลทำด้วย grants และ RPC ใน migration โดย browser ไม่มีสิทธิ์อ่านหรือแก้ตารางโดยตรง
+Publishable key สามารถอยู่ใน GitHub Pages ได้ ห้ามใส่ secret key โดยเด็ดขาด หน้าเว็บเรียก REST API ของตาราง `members` ตรง ๆ (ไม่มี RPC function แล้ว) การป้องกันข้อมูลทำด้วย column-level grant และ RLS policy ใน migration 002: อ่านได้ทุกแถวทุกคอลัมน์ แต่แก้ได้เฉพาะ `class_id` / `avatar_id` / `assigned_at` และแก้ได้เฉพาะตอนที่ `class_id` ยังเป็น null เท่านั้น จึงเลือกอาชีพซ้ำทับของเดิมไม่ได้แม้ยิง request ตรงด้วย curl
 
 Migration จะย้ายสมาชิกตัวอย่างเดิม 12 คนเข้า Supabase พร้อมอาชีพเดิม หากไม่ต้องการข้อมูลตัวอย่างให้ลบส่วน `insert into public.members` ก่อนรันครั้งแรก
 
@@ -43,13 +43,13 @@ returning id, name;
 สร้างลิงก์เชิญจากสมาชิกที่ยังไม่ได้ทำแบบทดสอบ:
 
 ```sql
-select name, 'https://inv.com/?id=' || id as invite_url
+select name, 'https://poonnadapattraktb.github.io/inv-guild/?id=' || id as invite_url
 from public.members
 where class_id is null
 order by name;
 ```
 
-UUID ทำหน้าที่เป็น invite token จึงควรส่งให้เจ้าของลิงก์โดยตรง เมื่อบันทึกแล้ว RPC `assign_member_class` จะไม่เปลี่ยนอาชีพอีก แม้มี request ซ้ำหรือเปิดพร้อมกันหลายเครื่อง การแก้ข้อมูลภายหลังต้องทำโดยผู้ดูแลใน Supabase
+UUID ทำหน้าที่เป็น invite token จึงควรส่งให้เจ้าของลิงก์โดยตรง เมื่อบันทึกแล้ว RLS policy `members_assign_once` จะไม่ยอมให้เปลี่ยนอาชีพอีก แม้มี request ซ้ำ เปิดพร้อมกันหลายเครื่อง หรือยิง PATCH ตรงด้วย curl การแก้ข้อมูลภายหลังต้องทำโดยผู้ดูแลใน Supabase
 
 ## รันในเครื่อง
 
@@ -63,4 +63,4 @@ python3 -m http.server 8000
 
 ## Deploy
 
-Deploy repository ด้วย GitHub Pages ตามปกติและตั้ง custom domain เป็น `inv.com` จากนั้นตรวจทั้ง base URL และลิงก์ UUID จริงหลัง migration สำเร็จ
+Deploy repository ด้วย GitHub Pages แล้วตรวจทั้ง `https://poonnadapattraktb.github.io/inv-guild/` และลิงก์ UUID จริงหลัง migration สำเร็จ

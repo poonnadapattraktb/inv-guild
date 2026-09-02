@@ -77,21 +77,18 @@ const Api = {
 
   get ready() { return Boolean(this.config.supabaseUrl && this.config.supabasePublishableKey); },
 
-  async rpc(name, body) {
-    const response = await fetch(this.config.supabaseUrl.replace(/\/$/, "") + "/rest/v1/rpc/" + name, {
-      method: "POST",
-      headers: {
-        apikey: this.config.supabasePublishableKey,
-        Authorization: "Bearer " + this.config.supabasePublishableKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body || {})
-    });
-    if (!response.ok) {
-      const detail = await response.json().catch(() => ({}));
-      throw new Error(detail.message || "Supabase request failed (" + response.status + ")");
-    }
-    return response.json();
+  get restUrl() { return this.config.supabaseUrl.replace(/\/$/, "") + "/rest/v1"; },
+
+  headers(extra) {
+    return Object.assign({
+      apikey: this.config.supabasePublishableKey,
+      Authorization: "Bearer " + this.config.supabasePublishableKey
+    }, extra || {});
+  },
+
+  async errorFrom(response) {
+    const detail = await response.json().catch(() => ({}));
+    return new Error(detail.message || "Supabase request failed (" + response.status + ")");
   },
 
   normalize(member) {
@@ -106,18 +103,39 @@ const Api = {
   },
 
   async getMember(id) {
-    const rows = await this.rpc("get_member_by_id", { p_id: id });
-    return rows[0] ? this.normalize(rows[0]) : null;
+    const response = await fetch(this.restUrl + "/members?id=eq." + encodeURIComponent(id), {
+      headers: this.headers({ Accept: "application/vnd.pgrst.object+json" })
+    });
+    if (response.status === 406) return null;
+    if (!response.ok) throw await this.errorFrom(response);
+    return this.normalize(await response.json());
   },
 
   async listMembers() {
-    const rows = await this.rpc("list_assigned_members");
+    const response = await fetch(this.restUrl + "/members?class_id=not.is.null&order=name.asc", {
+      headers: this.headers()
+    });
+    if (!response.ok) throw await this.errorFrom(response);
+    const rows = await response.json();
     return rows.map(row => this.normalize(row));
   },
 
   async assignMember(id, classId, avatarId) {
-    const rows = await this.rpc("assign_member_class", { p_id: id, p_class_id: classId, p_avatar_id: avatarId });
-    if (!rows[0]) throw new Error("ไม่พบสมาชิกสำหรับลิงก์นี้");
+    const response = await fetch(this.restUrl + "/members?id=eq." + encodeURIComponent(id), {
+      method: "PATCH",
+      headers: this.headers({
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      }),
+      body: JSON.stringify({
+        class_id: classId,
+        avatar_id: avatarId,
+        assigned_at: new Date().toISOString()
+      })
+    });
+    if (!response.ok) throw await this.errorFrom(response);
+    const rows = await response.json();
+    if (!rows[0]) throw new Error("ไม่พบสมาชิกสำหรับลิงก์นี้ หรือสมาชิกเลือกอาชีพไปแล้ว");
     return this.normalize(rows[0]);
   }
 };

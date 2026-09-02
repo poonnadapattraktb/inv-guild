@@ -27,17 +27,17 @@ const assignedRow = {
   level: 12
 };
 
-function response(data, ok = true) {
-  return { ok, status: ok ? 200 : 500, json: async () => data };
+function response(data, ok = true, status = ok ? 200 : 500) {
+  return { ok, status, json: async () => data };
 }
 
-async function boot(search, memberRow) {
+async function boot(search, memberRow, pathname = "/inv-guild/") {
   const appElement = { innerHTML: "" };
   const calls = [];
   const context = {
     console,
     URLSearchParams,
-    location: { search },
+    location: { search, pathname },
     document: { getElementById: () => appElement },
     window: {
       INV_GUILD_CONFIG: {
@@ -50,15 +50,30 @@ async function boot(search, memberRow) {
         return response(JSON.parse(fs.readFileSync(path.join(root, url), "utf8")));
       }
 
-      const rpc = url.split("/").pop();
-      calls.push({ rpc, body: options.body ? JSON.parse(options.body) : {} });
-      if (rpc === "list_assigned_members") return response([assignedRow]);
-      if (rpc === "get_member_by_id") return response(memberRow ? [memberRow] : []);
-      if (rpc === "assign_member_class") {
+      const u = new URL(url);
+      const method = (options.method || "GET").toUpperCase();
+      assert.equal(u.pathname, "/rest/v1/members");
+      const idFilter = u.searchParams.get("id");
+      const id = idFilter ? idFilter.replace(/^eq\./, "") : null;
+
+      if (method === "PATCH") {
         const body = JSON.parse(options.body);
-        return response([{ ...pendingRow, class_id: body.p_class_id, avatar_id: body.p_avatar_id, level: 1 }]);
+        calls.push({ type: "assign", id, body });
+        if (id === pendingRow.id) {
+          return response([{ ...pendingRow, class_id: body.class_id, avatar_id: body.avatar_id, assigned_at: body.assigned_at }]);
+        }
+        return response([]);
       }
-      return response({ message: "Unexpected RPC" }, false);
+
+      if (u.searchParams.get("class_id") === "not.is.null") {
+        calls.push({ type: "list" });
+        return response([assignedRow]);
+      }
+
+      calls.push({ type: "get", id });
+      if (id === pendingRow.id) return response(pendingRow);
+      if (id === assignedRow.id) return response(assignedRow);
+      return response({ message: "not found" }, false, 406);
     },
     setTimeout,
     clearTimeout
@@ -88,10 +103,11 @@ async function run() {
   pending.App.state.qi = 7;
   await pending.App.answer(7, 0);
   assert.equal(pending.App.state.screen, "memberProfile");
-  assert.equal(pending.calls.filter(call => call.rpc === "assign_member_class").length, 1);
+  assert.equal(pending.calls.filter(call => call.type === "assign").length, 1);
 
   const assigned = await boot("?id=" + assignedRow.id, assignedRow);
   assert.equal(assigned.App.state.screen, "welcome");
+  assert.equal(assigned.App.state.memberId, assignedRow.id);
   assert.match(assigned.appElement.innerHTML, /ดูข้อมูลของท่าน/);
   assigned.App.goHomePrimary();
   assert.equal(assigned.App.state.screen, "memberProfile");
