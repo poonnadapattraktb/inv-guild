@@ -586,6 +586,8 @@ const App = {
         </div>
       </div>`).join("");
 
+    const hintHtml = (cls.hint || []).map(t => `<div style="padding:6px 11px;background:#2b2159;border:2px solid ${cls.color};border-radius:999px;font-size:11.5px;font-weight:600;color:#f4ecd8;white-space:nowrap;">${t}</div>`).join("");
+
     const strengthsHtml = cls.str.map(t => `<div style="font-size:13px;line-height:1.5;color:#dff5cf;">▲ ${t}</div>`).join("");
     const weakHtml = cls.weak.map(t => `<div style="font-size:13px;line-height:1.5;color:#ffd6de;">▼ ${t}</div>`).join("");
 
@@ -652,6 +654,15 @@ const App = {
         <div style="flex:1;height:3px;background:#2b2159;"></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">${skillsHtml}</div>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
+        <div style="width:10px;height:10px;background:${cls.color};"></div>
+        <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">CAREER<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">เทียบได้กับสายงานเทค</span></div>
+        <div style="flex:1;height:3px;background:#2b2159;"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${hintHtml}</div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
