@@ -202,7 +202,7 @@ const Api = {
   },
 
   async listMembers() {
-    const response = await fetch(this.restUrl + "/members?class_id=not.is.null&order=name.asc", {
+    const response = await fetch(this.restUrl + "/members?order=name.asc", {
       headers: this.headers()
     });
     if (!response.ok) throw await this.errorFrom(response);
@@ -826,9 +826,10 @@ const App = {
   renderRoster() {
     const st = this.state;
     const averageLevel = MEMBERS.length ? Math.round(MEMBERS.reduce((total, member) => total + effectiveLevel(member), 0) / MEMBERS.length) : 0;
+    const assignedMembers = MEMBERS.filter(member => member.c);
     const rosterStats = [
       { n: MEMBERS.length, label: "สมาชิกทั้งหมด", color: ACCENT },
-      { n: new Set(MEMBERS.map(m => m.c)).size, label: "คลาสที่มี", color: "#3fd0c9" },
+      { n: new Set(assignedMembers.map(m => m.c)).size, label: "คลาสที่มี", color: "#3fd0c9" },
       { n: averageLevel, label: "เลเวลเฉลี่ย", color: "#e0508f" }
     ];
     const statsHtml = rosterStats.map(rs => `
@@ -838,7 +839,7 @@ const App = {
       </div>`).join("");
 
     const filters = [{ id: "all", label: "ทั้งหมด" }].concat(
-      CLASSES.filter(c => MEMBERS.some(m => m.c === c.id)).map(c => ({ id: c.id, label: c.short }))
+      CLASSES.filter(c => assignedMembers.some(m => m.c === c.id)).map(c => ({ id: c.id, label: c.short }))
     );
     const filtersHtml = filters.map(f => {
       const on = st.filter === f.id;
@@ -850,7 +851,10 @@ const App = {
     const members = MEMBERS.filter(m => st.filter === "all" || m.c === st.filter);
     const membersHtml = members.map(m => {
       const c = byId(CLASSES, m.c);
-      const a = byId(AVATARS, m.av);
+      const a = byId(AVATARS, m.av) || AVATARS[0];
+      const classLabel = c ? c.short : "ผู้ยังไม่เผยตัวตน";
+      const classEnglish = c ? c.en : "UNREVEALED";
+      const memberClassColor = c ? classColor(c.color) : "#8b7ed8";
       return `
       <div class="btn list-item" onclick="App.openMember('${m.id}')" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:10px 11px;background:#1e1746;border:4px solid #05030f;box-shadow:0 4px 0 #05030f;">
         <div style="flex:none;width:46px;height:46px;padding:2px;background:${a.bg};border:3px solid #05030f;overflow:hidden;">
@@ -864,8 +868,8 @@ const App = {
           <div style="margin-top:4px;font-size:12.5px;color:#9d92d6;">${m.r}</div>
         </div>
         <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-          <div style="padding:3px 7px;background:${classColor(c.color)};font-family:'Press Start 2P',monospace;font-size:8px;color:#05030f;">${c.short}</div>
-          <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:${classColor(c.color)};">${c.en}</div>
+          <div style="padding:3px 7px;background:${memberClassColor};font-family:Kanit,sans-serif;font-weight:600;font-size:11px;color:#05030f;">${classLabel}</div>
+          <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:${memberClassColor};">${classEnglish}</div>
         </div>
       </div>`;
     }).join("");

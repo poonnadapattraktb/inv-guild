@@ -85,9 +85,9 @@ async function boot(search, memberRow, pathname = "/inv-guild/") {
         return response([]);
       }
 
-      if (u.searchParams.get("class_id") === "not.is.null") {
+      if (!id) {
         calls.push({ type: "list" });
-        return response([assignedRow]);
+        return response([assignedRow, pendingRow]);
       }
 
       calls.push({ type: "get", id });
@@ -113,6 +113,10 @@ async function run() {
   assert.equal(guest.App.state.mode, "guest");
   assert.equal(guest.App.state.theme, "light");
   assert.match(guest.appElement.innerHTML, /เลือกคลาส/);
+  guest.App.goRoster();
+  assert.match(guest.appElement.innerHTML, /Assigned Member/);
+  assert.match(guest.appElement.innerHTML, /Pending Member/);
+  assert.match(guest.appElement.innerHTML, /ผู้ยังไม่เผยตัวตน/);
   guest.App.goHomePrimary();
   assert.equal(guest.App.state.screen, "avatar");
 
