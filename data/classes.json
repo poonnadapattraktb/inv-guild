@@ -10,10 +10,10 @@
     "LUK": "โชคชะตา — ปาฏิหาริย์",
     "MP": "มานา — พลังใจสำรอง"
   },
-  "statColors": { "ATK": "#e0483d", "DEF": "#6cc6f2", "HEAL": "#7bd44a", "SPD": "#f2b73d", "INT": "#b98cf2", "CHA": "#e0508f", "LUK": "#ffd97a", "MP": "#3fd0c9" },
+  "statColors": { "ATK": "#9c60e4", "DEF": "#b484e4", "HEAL": "#a0f090", "SPD": "#f2d24a", "INT": "#0060a8", "CHA": "#f0b4fc", "LUK": "#f2d24a", "MP": "#9c60e4" },
   "classes": [
     {
-      "id": "pm", "short": "WARLORD", "en": "WARLORD", "th": "จอมทัพผู้วางแผน", "color": "#f2b73d",
+      "id": "pm", "short": "WA", "en": "WARLORD", "th": "จอมทัพผู้วางแผน", "color": "#f2d24a",
       "desc": "ผู้มองเห็นแผนที่รบทั้งผืน คุณรู้วิธีจัดทัพให้ได้เปรียบที่สุด แม้มิใช่ผู้ถือดาบที่คมที่สุด แต่คุณคือผู้สั่งการให้ทุกทัพมุ่งสู่ชัยชนะพร้อมกัน",
       "st": { "ATK": 8, "DEF": 7, "HEAL": 6, "SPD": 6, "INT": 6, "CHA": 9, "LUK": 5, "MP": 7 },
       "sk": [["War Map", "แบ่งส่วนภารกิจใหญ่ให้เห็นเส้นทางเดิน"], ["Rally Cry", "ปลุกพลังใจให้ทัพที่กำลังอ่อนแรง"], ["Shield Wall", "ปกป้องอาณาเขตมิให้ศัตรูแทรกซึม"]],
@@ -22,7 +22,7 @@
       "hint": ["Product Manager", "Project Manager", "Program Manager", "Engineering Manager", "Head of Product"]
     },
     {
-      "id": "sa", "short": "SAGE", "en": "SAGE", "th": "นักปราชญ์ผู้แปลคำพยากรณ์", "color": "#b98cf2",
+      "id": "sa", "short": "SA", "en": "SAGE", "th": "นักปราชญ์ผู้แปลคำพยากรณ์", "color": "#b484e4",
       "desc": "ผู้ถอดรหัสเจตจำนงที่คลุมเครือให้เป็นภาพที่ชัดเจน สิ่งที่คนอื่นเห็นเป็นเพียงหมอกควัน คุณกลับเห็นเป็นโครงสร้างที่งดงาม",
       "st": { "ATK": 6, "DEF": 7, "HEAL": 5, "SPD": 5, "INT": 10, "CHA": 7, "LUK": 5, "MP": 8 },
       "sk": [["Vision Flow", "ร่างโครงสร้างที่ทุกคนเถียงกันให้เข้าใจตรงกัน"], ["Truth Cutter", "ตัดถ้อยคำกำกวมจนเหลือเพียงเนื้อแท้"], ["Tongue Bridge", "เชื่อมสัมพันธ์ระหว่างสภาและเหล่านักรบ"]],
@@ -31,7 +31,7 @@
       "hint": ["Business Analyst", "System Analyst", "Requirements Analyst", "Business Consultant"]
     },
     {
-      "id": "ba", "short": "BARD", "en": "BARD", "th": "นักเล่าเรื่องประสานใจ", "color": "#e0508f",
+      "id": "ba", "short": "BA", "en": "BARD", "th": "นักเล่าเรื่องประสานใจ", "color": "#f0b4fc",
       "desc": "อาวุธคือมนตราแห่งภาษาและความอดทนในการสดับฟัง คุณเปลี่ยนความเดือดดาลของราษฎรให้กลายเป็นภารกิจที่กองทัพจัดการได้ง่ายดาย",
       "st": { "ATK": 5, "DEF": 6, "HEAL": 9, "SPD": 6, "INT": 7, "CHA": 10, "LUK": 6, "MP": 7 },
       "sk": [["Deep Listen", "ขุดปัญหาที่แท้จริงภายใต้คำร้องขอ"], ["Calm Ballad", "ขับขานบทเพลงระงับความโกลาหล"], ["Chronicle", "บันทึกเรื่องราวแม่นยำกว่าอักขระใดๆ"]],
@@ -40,7 +40,7 @@
       "hint": ["Business Analyst", "Customer Success", "Technical Writer", "Community/Support Lead"]
     },
     {
-      "id": "fe", "short": "ILLUSIONIST", "en": "ILLUSIONIST", "th": "จอมเวทภาพลวงตา", "color": "#3fd0c9",
+      "id": "fe", "short": "IL", "en": "ILLUSIONIST", "th": "จอมเวทภาพลวงตา", "color": "#9c60e4",
       "desc": "คุณสร้างสรรค์สิ่งที่ยังไม่เกิดให้ดูเสมือนจริง และทำสิ่งที่ซับซ้อนให้ดูง่ายดายเหมือนร่ายมนตร์ ความประทับใจคือพลังของคุณ",
       "st": { "ATK": 7, "DEF": 6, "HEAL": 6, "SPD": 9, "INT": 7, "CHA": 6, "LUK": 6, "MP": 7 },
       "sk": [["Precision Eye", "ปรับจูนทุกอณูให้งดงามไร้ที่ติ"], ["Flow Glaze", "ร่ายมนตร์ให้ทุกการเคลื่อนไหวดูรวดเร็ว"], ["State Weave", "จัดระเบียบห้วงมิติไม่ให้สั่นคลอน"]],
@@ -49,7 +49,7 @@
       "hint": ["Frontend Developer", "UI Developer", "Mobile App Developer", "Web Developer"]
     },
     {
-      "id": "be", "short": "BLACKSMITH", "en": "BLACKSMITH", "th": "ช่างตีเหล็กใต้ดิน", "color": "#6cc6f2",
+      "id": "be", "short": "BL", "en": "BLACKSMITH", "th": "ช่างตีเหล็กใต้ดิน", "color": "#0060a8",
       "desc": "ผู้สร้างรากฐานที่ไม่มีใครมองเห็น แต่ทุกคนจะนึกถึงคุณทันทีที่มันพัง คุณตีเหล็กให้หนาและแกร่งเสมอ เพราะรู้ว่าวันหนึ่งจะมีศัตรูมาทุบ",
       "st": { "ATK": 8, "DEF": 10, "HEAL": 5, "SPD": 6, "INT": 9, "CHA": 4, "LUK": 5, "MP": 8 },
       "sk": [["Forge Core", "หลอมโครงสร้างให้ทนทานต่อแรงกระแทก"], ["Trace Hunt", "แกะรอยความล้มเหลวข้ามมิติ"], ["Cache Ward", "เสกความเร็วจากที่ไม่มีใครสังเกต"]],
@@ -58,16 +58,16 @@
       "hint": ["Backend Developer", "Database Engineer", "API Engineer", "Software Engineer (Backend)"]
     },
     {
-      "id": "fs", "short": "PALADIN", "en": "PALADIN", "th": "อัศวินสองมือ", "color": "#7bd44a",
+      "id": "fs", "short": "PA", "en": "PALADIN", "th": "อัศวินสองมือ", "color": "#a0f090",
       "desc": "ถือทั้งดาบและโล่ ตรงไหนที่แนวรบขาดคน คุณคือคนแรกที่ไปยืนแทนที่ ผู้ที่เหล่าสหายเรียกหาเสมอเมื่อเกิดไฟสงคราม",
       "st": { "ATK": 8, "DEF": 8, "HEAL": 7, "SPD": 8, "INT": 8, "CHA": 6, "LUK": 6, "MP": 6 },
       "sk": [["Dual Wield", "ชำนาญทั้งการรุกและการรับในวันเดียว"], ["Gap Fill", "อุดช่องว่างของทัพที่ไร้เจ้าภาพ"], ["Ship It", "นำชัยชนะสู่จุดหมายด้วยตนเอง"]],
       "str": ["ปิดภารกิจได้ครบวงจรโดยไม่ต้องรอใคร", "เข้าใจผลกระทบของทุกฝั่งพร้อมกัน"],
-      "weak": ["ถูกดึงไปช่วยทุกทัพจนไร้งานของตน", "ความเชี่ยวชาญไม่ลึกซึ้งเท่าสายอาชีพเฉพาะ"], "party": ["do", "fe"],
+      "weak": ["ถูกดึงไปช่วยทุกทัพจนไร้งานของตน", "ความเชี่ยวชาญไม่ลึกซึ้งเท่าคลาสเฉพาะทาง"], "party": ["do", "fe"],
       "hint": ["Fullstack Developer", "Software Engineer (Generalist)", "Solutions Engineer"]
     },
     {
-      "id": "qa", "short": "BUG HUNTER", "en": "BUG HUNTER", "th": "นักล่าจอมโหด", "color": "#e0483d",
+      "id": "qa", "short": "BH", "en": "BUG HUNTER", "th": "นักล่าจอมโหด", "color": "#004884",
       "desc": "ผู้คอยทดสอบความแข็งแกร่งด้วยการกดดันทุกจุดอ่อน ทีมงานหวาดกลัวคุณก่อนออกรบ แต่จะสรรเสริญคุณหลังจากรอดพ้นจากภัย",
       "st": { "ATK": 9, "DEF": 8, "HEAL": 6, "SPD": 7, "INT": 8, "CHA": 6, "LUK": 7, "MP": 7 },
       "sk": [["Edge Sense", "สัมผัสกับดักที่ไม่มีใครคาดคิด"], ["Repro Chain", "เลียนแบบเหตุการณ์ซ้ำได้แม่นยำ"], ["Gate Keep", "กล้าหยุดทัพที่ยังไม่พร้อมออกรบ"]],
@@ -76,7 +76,7 @@
       "hint": ["QA Engineer", "Test Engineer", "SDET (QA Automation Engineer)"]
     },
     {
-      "id": "do", "short": "GOLEM KEEPER", "en": "GOLEM KEEPER", "th": "ผู้คุมป้อมปราการ", "color": "#f2b73d",
+      "id": "do", "short": "GK", "en": "GOLEM KEEPER", "th": "ผู้คุมป้อมปราการ", "color": "#f2d24a",
       "desc": "ผู้สร้างกลไกจักรกลให้ทำงานแทนมนุษย์ เฝ้ามองหอคอยในยามที่ทุกคนหลับใหล พลังของคุณคือการสั่งการป้อมปราการด้วยปลายนิ้ว",
       "st": { "ATK": 7, "DEF": 10, "HEAL": 6, "SPD": 9, "INT": 8, "CHA": 5, "LUK": 6, "MP": 8 },
       "sk": [["Automaton", "สร้างกลไกอัตโนมัติให้ทำงานแทนทัพ"], ["Rollback Reflex", "ถอยทัพกลับทันทีเมื่อเกิดเหตุไม่คาดฝัน"], ["Watchtower", "ตั้งสัญญาณเตือนภัยที่แม่นยำที่สุด"]],
@@ -85,7 +85,7 @@
       "hint": ["DevOps Engineer", "Site Reliability Engineer (SRE)", "Platform Engineer", "Cloud Engineer", "System Administrator"]
     },
     {
-      "id": "ux", "short": "ENCHANTER", "en": "ENCHANTER", "th": "นักร่ายมนตร์รูปลักษณ์", "color": "#e0508f",
+      "id": "ux", "short": "EN", "en": "ENCHANTER", "th": "นักร่ายมนตร์รูปลักษณ์", "color": "#f0b4fc",
       "desc": "คุณทำให้ผู้คนใช้งานอาวุธและวิหารได้โดยไม่ต้องมีคัมภีร์สอน นั่นคือเวทมนตร์ที่แนบเนียนที่สุด เพราะไม่มีใครล่วงรู้ว่าคุณร่ายมนตร์อยู่",
       "st": { "ATK": 6, "DEF": 6, "HEAL": 8, "SPD": 7, "INT": 8, "CHA": 9, "LUK": 6, "MP": 7 },
       "sk": [["Empathy Read", "สังเกตผู้คนและเห็นจุดสะดุดในใจ"], ["Flow Charm", "ย่นระยะทางจากจุดหนึ่งไปอีกจุดให้สั้นลง"], ["Design Bind", "สร้างผังการใช้งานให้คนอื่นหยิบไปใช้ต่อ"]],
@@ -94,7 +94,7 @@
       "hint": ["UX Designer", "UI Designer", "UX Researcher", "Product Designer"]
     },
     {
-      "id": "da", "short": "NECROMANCER", "en": "NECROMANCER", "th": "ผู้ปลุกข้อมูลที่สาบสูญ", "color": "#3fd0c9",
+      "id": "da", "short": "NE", "en": "NECROMANCER", "th": "ผู้ปลุกข้อมูลที่สาบสูญ", "color": "#9c60e4",
       "desc": "คัมภีร์ที่ถูกทิ้งร้างมานานปี คุณสามารถชุบชีวิตมันให้กลับมาพูดความจริงได้ คำพูดในที่ประชุมมักพ่ายแพ้ให้กับกราฟของคุณ",
       "st": { "ATK": 6, "DEF": 7, "HEAL": 5, "SPD": 6, "INT": 10, "CHA": 6, "LUK": 7, "MP": 8 },
       "sk": [["Raise Insight", "ขุดความจริงจากกองซากข้อมูลดิบ"], ["Number Doubt", "มองเห็นตัวเลขลวงตาที่ไม่มีใครเอะใจ"], ["Model Summon", "ทดลองคาถาเล็กๆ ก่อนร่ายมนตร์ใหญ่"]],
@@ -103,7 +103,7 @@
       "hint": ["Data Analyst", "Data Scientist", "Data Engineer", "Business Intelligence (BI) Analyst"]
     },
     {
-      "id": "monarch", "short": "MONARCH", "en": "MONARCH", "th": "MONARCH · ผู้ปกครองอาณาจักร", "color": "#ffd700",
+      "id": "monarch", "short": "MO", "en": "MONARCH", "th": "MONARCH · ผู้ปกครองอาณาจักร", "color": "#f2d24a",
       "desc": "ผู้ครองบัลลังก์ที่มองภาพรวมของทวีป คุณตัดสินใจในเรื่องความเป็นความตายของปาร์ตี้ ไม่ได้สู้ในแนวหน้าแต่เป็นคนที่กำหนดว่าวันนี้เราจะไปรบที่ไหน",
       "st": { "ATK": 6, "DEF": 8, "HEAL": 7, "SPD": 5, "INT": 9, "CHA": 10, "LUK": 8, "MP": 10 },
       "sk": [["Vision Quest", "กำหนดเป้าหมายสูงสุดที่ทุกคนต้องมุ่งไป"], ["Resource Call", "เรียกขุมทรัพย์จากคลังหลวงมาสนับสนุนทัพ"], ["Imperial Decree", "ตัดสินใจเด็ดขาดในเวลาที่ทีมเถียงกันไม่จบ"]],
@@ -112,7 +112,7 @@
       "hint": ["CEO", "CTO", "Head of Product", "VP of Engineering"]
     },
     {
-      "id": "archmage", "short": "ARCHMAGE", "en": "ARCHMAGE", "th": "ARCHMAGE · ผู้อำนวยการหอคอย", "color": "#7030a0",
+      "id": "archmage", "short": "AR", "en": "ARCHMAGE", "th": "ARCHMAGE · ผู้อำนวยการหอคอย", "color": "#b484e4",
       "desc": "ผู้คุมหอคอยเวทมนตร์ คุณไม่ร่ายคาถาเล็กน้อย แต่เป็นผู้กำหนดสายลมของเวทมนตร์ให้ทั้งหอคอยไปในทิศทางเดียวกัน ดูแลการเติบโตของจอมเวทนับร้อย",
       "st": { "ATK": 7, "DEF": 7, "HEAL": 8, "SPD": 6, "INT": 10, "CHA": 9, "LUK": 6, "MP": 10 },
       "sk": [["Guild Blessing", "สร้างสภาพแวดล้อมให้ลูกน้องเก่งขึ้น"], ["Strategic Shift", "ปรับเปลี่ยนวิชาของหอคอยให้ทันยุคสมัย"], ["Mentor Aura", "ถ่ายทอดพลังให้ผู้ใต้บังคับบัญชา"]],

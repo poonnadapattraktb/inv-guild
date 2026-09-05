@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-html,body{margin:0;padding:0;background:#0a0818;}
+html,body{margin:0;padding:0;background:#cce4fc;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 a{color:#f2b73d;text-decoration:none;}a:hover{color:#ffd97a;}
 ::-webkit-scrollbar{width:0}
@@ -17,7 +17,28 @@ a{color:#f2b73d;text-decoration:none;}a:hover{color:#ffd97a;}
 @keyframes pop{0%{transform:scale(.86);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes shine{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
 
-.btn{cursor:pointer;transition:transform .08s,filter .12s,background-color .12s;}
+.btn{cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;transition:transform .08s,filter .12s,background-color .12s;}
+.theme-toggle{min-width:56px;padding:7px 8px;background:#f4ecd8;border:3px solid #05030f;box-shadow:0 3px 0 #05030f;color:#151033;font:7px 'Press Start 2P',monospace;letter-spacing:.5px;}
+.theme-toggle:active{transform:translateY(2px);box-shadow:0 1px 0 #05030f;}
+.theme-light .btn-secondary:hover,.theme-light .list-item:hover,.theme-light .option-btn:hover{background:#f0e4fc !important;}
+.theme-light .theme-toggle{background:#004884;border-color:#004884;box-shadow:0 3px 0 #0060a8;color:#fcfcfc;}
+.theme-light .theme-toggle:active{box-shadow:0 1px 0 #004884;}
+.theme-light .btn-primary:active,.theme-light .list-item:active,.theme-light .option-btn:active{box-shadow:0 2px 0 #004884 !important;}
+.theme-light .screen-title{color:#004884 !important;text-shadow:3px 3px 0 #c0d8f0 !important;}
+.theme-light .section-title{color:#004884 !important;}
+.theme-light .question-text,.theme-light .content-title,.theme-light .member-name{color:#004884 !important;}
+.theme-light input{color:#004884 !important;}
+.theme-light input::placeholder{color:#90b4cc;opacity:1;}
+.theme-light .btn-primary,.theme-light .question-tag,.theme-light .filter-active{color:#fcfcfc !important;}
+.theme-light .hero-avatar-frame{background:rgba(255,255,255,.5) !important;}
+.theme-light .hero-role{background:#004884 !important;}
+.theme-light .home-icon{background:#004884 !important;}
+.theme-light .home-label{color:#004884 !important;}
+.theme-light .hud-wordmark{color:#004884 !important;}
+.theme-light .party-item{background:#fce4fc !important;border-color:#9c60e4 !important;color:#0060a8 !important;}
+.theme-light .luck-mark{color:#fcfcfc !important;}
+.theme-light .codex-en,.theme-light .codex-name{color:#0060a8 !important;}
+.theme-light .reroll-btn:hover{background:#e0a020 !important;color:#fcfcfc !important;}
 .btn-primary:hover{transform:translateY(-2px)}
 .btn-primary:active{transform:translateY(4px);box-shadow:0 2px 0 #05030f !important}
 .btn-secondary:hover{background:#2f2568}
@@ -36,7 +57,7 @@ a{color:#f2b73d;text-decoration:none;}a:hover{color:#ffd97a;}
 </head>
 <body>
 <div id="app">
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0818;font-family:'Press Start 2P',monospace;font-size:10px;color:#4b418a;letter-spacing:1px;">LOADING...</div>
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#cce4fc;font-family:'Press Start 2P',monospace;font-size:10px;color:#4878c0;letter-spacing:1px;">LOADING...</div>
 </div>
 
 <script src="config.js"></script>
@@ -45,6 +66,51 @@ a{color:#f2b73d;text-decoration:none;}a:hover{color:#ffd97a;}
 let HAIRS, BODY, AVATARS, S, SLAB, SCOL, CLASSES, QS, OMENS, ROLLS, MEMBERS;
 
 const ACCENT = "#3fd0c9";
+const LIGHT_STAT_COLORS = { ATK: "#e0483d", DEF: "#0060a8", HEAL: "#5cb832", SPD: "#e0a020", INT: "#9c60e4", CHA: "#c23b8f", LUK: "#f2c200", MP: "#1fb0a8" };
+
+const LIGHT_COLORS = {
+  "#0a0818": "#cce4fc", "#151033": "#e4f0fc", "#0d0a22": "#fcfcfc", "#05030f": "#004884",
+  "#2b2159": "#c0d8f0", "#241c52": "#fcfcfc", "#1e1746": "#fce4fc", "#35296e": "#f0b4f0",
+  "#3a2d78": "#f0b4f0", "#f4ecd8": "#fcfcfc", "#cfc6f5": "#0060a8", "#e8e2ff": "#004884",
+  "#8b7ed8": "#4878c0", "#4b418a": "#90b4cc", "#6a5fae": "#90b4cc", "#9d92d6": "#4878c0",
+  "#3fd0c9": "#1fb0a8", "#211736": "#004884", "#e0508f": "#c23b8f", "#f2b73d": "#e0a020",
+  "#ffd97a": "#e0a020", "#f2d24a": "#e0a020", "#b98cf2": "#9c60e4", "#7bd44a": "#2a8f4a", "#ff8fa3": "#c2385a",
+  "#ffd6de": "#a02a4a", "#dff5cf": "#1a6b3a", "#153a2e": "#e0f4d8", "#3d1526": "#fce0e4",
+  "#2a2450": "#c0d8f0", "#261e57": "#e4f0fc", "#2f2568": "#e4f0fc", "#1a1030": "#004884",
+  "#b2554d": "#c2385a", "#0f3b52": "#c0d8f0", "#241a4a": "#e4f0fc", "#181236": "#c0d8f0"
+};
+
+function lightMarkup(markup) {
+  let out = markup
+    .replace("background-image:radial-gradient(circle at 20% 15%,#241a4a 0%,rgba(10,8,24,0) 55%),radial-gradient(circle at 82% 78%,#0f3b52 0%,rgba(10,8,24,0) 50%),linear-gradient(#0a0818,#0a0818);", "background-image:radial-gradient(circle at 20% 15%,#fcfcfc 0%,rgba(204,228,252,0) 55%),radial-gradient(circle at 82% 78%,#d8f0fc 0%,rgba(204,228,252,0) 50%),linear-gradient(#cce4fc,#cce4fc);")
+    .replace("background-image:radial-gradient(#fff 1px,transparent 1px);", "background-image:radial-gradient(#004884 1px,transparent 1px);")
+    .replace("opacity:.22;background-image:radial-gradient(#004884 1px,transparent 1px);", "opacity:.16;background-image:radial-gradient(#004884 1px,transparent 1px);")
+    .replace("background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);", "background-image:linear-gradient(rgba(0,72,132,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,72,132,.07) 1px,transparent 1px);")
+    .replace(/rgba\(0,0,0,\.28\)/g, "rgba(0,72,132,.10)")
+    .replace(/rgba\(255,255,255,\.14\)/g, "rgba(255,255,255,.75)")
+    .replace(/rgba\(255,255,255,\.35\)/g, "rgba(255,255,255,.7)")
+    .replace(/rgba\(5,3,15,\.7[0-9]?\)/g, "rgba(0,72,132,.75)")
+    .replace(/0 24px 60px rgba\(0,0,0,\.7\)/g, "0 24px 60px rgba(0,72,132,.28)")
+    .replace(/,0 0 22px rgba\(242,183,61,\.35\)/g, "")
+    .replace(/border-radius:999px/g, "border-radius:0");
+  Object.keys(LIGHT_COLORS).forEach(color => { out = out.replace(new RegExp(color, "gi"), LIGHT_COLORS[color]); });
+  out = out.replace(/rgba\(0,0,0,[^)]+\)/g, "rgba(0,72,132,.16)")
+    .replace(/rgba\(5,3,15,[^)]+\)/g, "rgba(0,72,132,.16)")
+    .replace(/rgba\(13,10,34,[^)]+\)/g, "rgba(0,72,132,.72)")
+    .replace(/rgba\(255,255,255,[^)]+\)/g, "rgba(252,252,252,.35)")
+    .replace(/rgba\(252,252,252,\.35\)/g, "rgba(255,255,255,.7)")
+    .replace("background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);", "background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);");
+  return out;
+}
+
+function classColor(color) {
+  if (App.state.theme !== "light") return color;
+  return { "#0060a8": "#8fc8f4", "#004884": "#f4a8a0", "#9c60e4": "#7fdcd4" }[color] || color;
+}
+
+function statColor(key) {
+  return App.state.theme === "light" ? LIGHT_STAT_COLORS[key] : SCOL[key];
+}
 
 function shadowFor(av) {
   const map = { h: av.h, s: av.s, c: av.c, a: av.a, e: "#1a1030", m: "#b2554d" };
@@ -161,7 +227,7 @@ const Api = {
     });
     if (!response.ok) throw await this.errorFrom(response);
     const rows = await response.json();
-    if (!rows[0]) throw new Error("ไม่พบสมาชิกสำหรับลิงก์นี้ หรือสมาชิกเลือกอาชีพไปแล้ว");
+    if (!rows[0]) throw new Error("ไม่พบสมาชิกสำหรับลิงก์นี้ หรือสมาชิกเลือกคลาสไปแล้ว");
     return this.normalize(rows[0]);
   }
 };
@@ -216,10 +282,18 @@ const App = {
     luck: null,
     filter: "all",
     error: null,
-    rosterError: null
+    rosterError: null,
+    theme: (() => { try { return window.localStorage.getItem("inv-guild-theme") || "light"; } catch (e) { return "light"; } })()
   },
 
   set(patch) { Object.assign(this.state, patch); this.render(); },
+
+  toggleTheme() {
+    const theme = this.state.theme === "light" ? "dark" : "light";
+    this.state.theme = theme;
+    try { window.localStorage.setItem("inv-guild-theme", theme); } catch (e) {}
+    this.render();
+  },
 
   rollLuck() {
     const labels = pick(ROLLS, 4);
@@ -273,7 +347,13 @@ const App = {
   startQuiz() { this.set({ screen: "quiz", qi: 0, answers: [] }); },
   restart() { if (this.state.mode === "guest") this.set({ screen: "avatar", qi: 0, answers: [], resultId: null }); },
   prevQ() { this.state.qi === 0 ? this.set({ screen: "avatar" }) : this.set({ qi: this.state.qi - 1 }); },
-  rerollLuck() { this.set({ luck: this.rollLuck() }); },
+  rerollLuck() {
+    const scroller = document.querySelector(".screen-scroll");
+    const scrollTop = scroller ? scroller.scrollTop : 0;
+    this.set({ luck: this.rollLuck() });
+    const nextScroller = document.querySelector(".screen-scroll");
+    if (nextScroller) nextScroller.scrollTop = scrollTop;
+  },
   setName(v) { this.state.name = v; },
   setNickname(v) { this.state.nickname = v; },
   pickAvatar(id) { this.set({ avatarId: id }); },
@@ -349,6 +429,7 @@ const App = {
   /* ---------- rendering ---------- */
   render() {
     const st = this.state;
+    const isLight = st.theme === "light";
     const heroLevel = st.screen === "memberProfile" && st.currentMember
       ? effectiveLevel(st.currentMember)
       : (st.screen === "classDetail" ? 10 : (st.joinedAt ? calculateLevel(st.joinedAt) : Math.min(30, 6 + Math.round((st.bestScore || 6) * 1.4))));
@@ -367,12 +448,12 @@ const App = {
     else if (st.screen === "classDetail") body = this.renderClassDetail(heroLevel);
     else if (st.screen === "codex") body = this.renderCodex();
     else if (st.screen === "roster") body = this.renderRoster();
-    else if (st.screen === "saving") body = this.renderStatus("SAVING...", "กำลังบันทึกอาชีพของคุณ");
+    else if (st.screen === "saving") body = this.renderStatus("SAVING...", "กำลังบันทึกคลาสของคุณ");
     else if (st.screen === "saveError") body = this.renderStatus("SAVE FAILED", st.error, true);
     else if (st.screen === "error") body = this.renderStatus("LINK ERROR", st.error);
 
     const html = `
-<div style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;background:#0a0818;background-image:radial-gradient(circle at 20% 15%,#241a4a 0%,rgba(10,8,24,0) 55%),radial-gradient(circle at 82% 78%,#0f3b52 0%,rgba(10,8,24,0) 50%),linear-gradient(#0a0818,#0a0818);font-family:Kanit,system-ui,sans-serif;">
+<div class="${isLight ? "theme-light" : "theme-dark"}" style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;background:#0a0818;background-image:radial-gradient(circle at 20% 15%,#241a4a 0%,rgba(10,8,24,0) 55%),radial-gradient(circle at 82% 78%,#0f3b52 0%,rgba(10,8,24,0) 50%),linear-gradient(#0a0818,#0a0818);font-family:Kanit,system-ui,sans-serif;">
   <div style="position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:32px 32px;"></div>
 
   <div style="--accent:${ACCENT};position:relative;width:min(414px,100vw);height:min(880px,100vh);flex:none;background:#151033;border:5px solid #05030f;box-shadow:0 0 0 5px #2b2159,0 24px 60px rgba(0,0,0,.7);display:flex;flex-direction:column;overflow:hidden;">
@@ -382,34 +463,35 @@ const App = {
     <div style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#0d0a22;border-bottom:4px solid #05030f;">
       <div style="display:flex;align-items:center;gap:7px;">
         <div style="width:14px;height:14px;background:${ACCENT};box-shadow:4px 0 0 #05030f,-4px 0 0 #05030f;"></div>
-        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#f4ecd8;letter-spacing:.5px;">INV GUILD</span>
+        <span class="hud-wordmark" style="font-family:'Press Start 2P',monospace;font-size:8px;color:#f4ecd8;letter-spacing:.5px;">INV GUILD</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#e0508f;">♥♥♥</span>
         <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#3fd0c9;">${hudRight}</span>
+        <button class="btn theme-toggle" onclick="App.toggleTheme()" aria-label="สลับธีม">${isLight ? "DARK" : "LIGHT"}</button>
       </div>
     </div>
 
-    <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;">
+    <div class="screen-scroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;">
       ${body}
     </div>
 
     <div style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;background:#0d0a22;border-top:4px solid #05030f;">
       <div class="btn home-btn" onclick="App.goWelcome()" style="cursor:pointer;flex:none;display:flex;align-items:center;gap:7px;padding:7px 11px;background:${homeBg};border:3px solid #05030f;">
-        <div style="width:12px;height:12px;background:${homeFg};clip-path:polygon(50% 0,100% 45%,84% 45%,84% 100%,60% 100%,60% 62%,40% 62%,40% 100%,16% 100%,16% 45%,0 45%);"></div>
-        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:${homeFg};">HOME</span>
+        <div class="home-icon" style="width:12px;height:12px;background:${homeFg};clip-path:polygon(50% 0,100% 45%,84% 45%,84% 100%,60% 100%,60% 62%,40% 62%,40% 100%,16% 100%,16% 45%,0 45%);"></div>
+        <span class="home-label" style="font-family:'Press Start 2P',monospace;font-size:8px;color:${homeFg};">HOME</span>
       </div>
       <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#4b418a;">CSM CHAPTER · v1.0</div>
     </div>
   </div>
 </div>`;
 
-    document.getElementById("app").innerHTML = html;
+    document.getElementById("app").innerHTML = isLight ? lightMarkup(html) : html;
   },
 
   renderWelcome() {
     const memberHasClass = this.state.mode === "member" && this.state.currentMember && this.state.currentMember.c;
-    const primaryLabel = memberHasClass ? "ดูข้อมูลของท่าน" : "เลือกอาชีพ";
+    const primaryLabel = memberHasClass ? "ดูข้อมูลของท่าน" : "เลือกคลาส";
     const guestButton = this.state.mode === "member"
       ? '<div class="btn btn-secondary" onclick="App.playAsGuest()" style="cursor:pointer;position:absolute;top:14px;right:14px;padding:7px 9px;background:#241c52;border:3px solid #05030f;box-shadow:0 3px 0 #05030f;font-family:\'Press Start 2P\',monospace;font-size:7px;color:#cfc6f5;">GUEST MODE</div>'
       : "";
@@ -417,16 +499,16 @@ const App = {
 <div style="position:relative;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:34px 22px 40px;text-align:center;">
   ${guestButton}
   <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#8b7ed8;letter-spacing:2px;margin-bottom:18px;">◆ CHAPTER 01 ◆</div>
-  <div style="position:relative;padding:20px 18px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e,8px 8px 0 rgba(0,0,0,.45);overflow:hidden;">
+  <div class="logo-block" style="position:relative;padding:20px 18px;background:#05030f;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #1a1030,8px 8px 0 rgba(0,0,0,.45);overflow:hidden;">
     <div style="position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);animation:shine 3.4s linear infinite;"></div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:26px;line-height:1.35;color:#f4ecd8;text-shadow:4px 4px 0 #05030f,0 0 22px rgba(242,183,61,.35);">INV<br>GUILD</div>
-    <div style="margin-top:12px;display:inline-block;padding:5px 10px;background:${ACCENT};border:3px solid #05030f;font-family:'Press Start 2P',monospace;font-size:10px;color:#211736;">CSM</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:26px;line-height:1.35;color:#f4ecd8;text-shadow:4px 4px 0 #1a1030,0 0 22px rgba(242,183,61,.35);">INV<br>GUILD</div>
+    <div style="margin-top:12px;display:inline-block;padding:5px 10px;background:${ACCENT};border:3px solid #05030f;font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">CSM</div>
   </div>
-  <div style="margin-top:22px;font-size:15px;font-weight:500;color:#cfc6f5;line-height:1.7;">ยินดีต้อนรับสู่กิลด์นักผจญภัย INVESTMENT<br><span style="color:#8b7ed8;font-size:13px;">ตอบ 8 คำถาม แล้วมารับ “อาชีพ” ประจำตัวของคุณ</span></div>
+  <div style="margin-top:22px;font-size:15px;font-weight:500;color:#cfc6f5;line-height:1.7;">ยินดีต้อนรับสู่กิลด์นักผจญภัย INVESTMENT<br><span style="color:#8b7ed8;font-size:13px;">ตอบ 8 คำถาม แล้วมารับ “คลาส” ประจำตัวของคุณ</span></div>
 
   <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
     <div class="btn btn-primary" onclick="App.goHomePrimary()" style="cursor:pointer;padding:15px 12px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 6px 0 #05030f;font-family:Kanit,sans-serif;font-weight:700;font-size:16px;color:#211736;text-align:center;">${primaryLabel}</div>
-    <div class="btn btn-secondary" onclick="App.goCodex()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:14px;color:#cfc6f5;text-align:center;">ทำเนียบอาชีพทั้งหมด (${CLASSES.length})</div>
+    <div class="btn btn-secondary" onclick="App.goCodex()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:14px;color:#cfc6f5;text-align:center;">ทำเนียบคลาสทั้งหมด (${CLASSES.length})</div>
     <div class="btn btn-secondary" onclick="App.goRoster()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:14px;color:#cfc6f5;text-align:center;">สมาชิกในกิลด์ (${MEMBERS.length})</div>
   </div>
 
@@ -471,7 +553,7 @@ const App = {
 
     return `
 <div style="padding:20px 18px 30px;">
-  <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">CREATE HERO</div>
+  <div class="screen-title" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">CREATE HERO</div>
   <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">${profileImg ? "ตั้งชื่อในกิลด์" : "เลือกอวาตาร์และตั้งชื่อในกิลด์"}</div>
   ${welcomeHtml}
   ${pickerHtml}
@@ -510,8 +592,8 @@ const App = {
   <div style="margin-top:10px;display:flex;gap:4px;">${progressHtml}</div>
 
   <div style="margin-top:18px;position:relative;padding:16px 14px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e,6px 6px 0 rgba(0,0,0,.4);animation:pop .18s ease-out;">
-    <div style="position:absolute;top:-13px;left:12px;padding:3px 8px;background:${ACCENT};border:3px solid #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:12px;letter-spacing:.3px;color:#211736;">${q.category}</div>
-    <div style="margin-top:6px;font-size:17px;font-weight:600;line-height:1.6;color:#f4ecd8;text-wrap:pretty;">${q.text}</div>
+    <div class="question-tag" style="position:absolute;top:-13px;left:12px;padding:3px 8px;background:${ACCENT};border:3px solid #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:12px;letter-spacing:.3px;color:#211736;">${q.category}</div>
+    <div class="question-text" style="margin-top:6px;font-size:17px;font-weight:600;line-height:1.6;color:#f4ecd8;text-wrap:pretty;">${q.text}</div>
   </div>
 
   <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">${optionsHtml}</div>
@@ -529,8 +611,8 @@ const App = {
 
     return `
 <div style="padding:20px 18px 30px;">
-  <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">TENURE CHECK</div>
-  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">เข้าทำงานปีอะไร? (คำถามนี้ไม่มีผลต่อการเลือกอาชีพ)</div>
+  <div class="screen-title" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">TENURE CHECK</div>
+  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">เข้าทำงานปีอะไร? (คำถามนี้ไม่มีผลต่อการเลือกคลาส)</div>
 
   <div style="margin-top:18px;padding:14px;background:#1e1746;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #35296e;">
     <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#8b7ed8;">ปีที่เข้าทำงาน (พ.ศ. หรือ ค.ศ. ก็ได้)</div>
@@ -566,10 +648,10 @@ const App = {
     const statListHtml = S.map(k => {
       const v = cls.st[k];
       let cells = "";
-      for (let i = 0; i < 10; i++) cells += `<div style="flex:1;height:11px;background:${i < v ? SCOL[k] : "#2a2450"};"></div>`;
+      for (let i = 0; i < 10; i++) cells += `<div style="flex:1;height:11px;background:${i < v ? statColor(k) : "#2a2450"};"></div>`;
       return `
       <div style="display:flex;align-items:center;gap:9px;">
-        <div style="flex:none;width:34px;font-family:'Press Start 2P',monospace;font-size:8px;color:${SCOL[k]};">${k}</div>
+        <div style="flex:none;width:34px;font-family:'Press Start 2P',monospace;font-size:8px;color:${statColor(k)};">${k}</div>
         <div style="flex:1;display:flex;gap:2px;">${cells}</div>
         <div style="flex:none;width:22px;text-align:right;font-family:'Press Start 2P',monospace;font-size:8px;color:#cfc6f5;">${v}</div>
       </div>`;
@@ -584,12 +666,12 @@ const App = {
       <div style="display:flex;gap:10px;padding:11px 11px;background:#241c52;border:4px solid #05030f;">
         <div style="flex:none;width:22px;height:22px;background:#3fd0c9;border:3px solid #05030f;"></div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:#f4ecd8;">${s[0]}</div>
+          <div class="content-title" style="font-size:14px;font-weight:600;color:#f4ecd8;">${s[0]}</div>
           <div style="margin-top:2px;font-size:12.5px;color:#9d92d6;line-height:1.5;">${s[1]}</div>
         </div>
       </div>`).join("");
 
-    const hintHtml = (cls.hint || []).map(t => `<div style="padding:6px 11px;background:#2b2159;border:2px solid ${cls.color};border-radius:999px;font-size:11.5px;font-weight:600;color:#f4ecd8;white-space:nowrap;">${t}</div>`).join("");
+    const hintHtml = (cls.hint || []).map(t => `<div style="padding:6px 11px;background:#2b2159;border:2px solid ${classColor(cls.color)};border-radius:999px;font-size:11.5px;font-weight:600;color:#f4ecd8;white-space:nowrap;">${t}</div>`).join("");
 
     const strengthsHtml = cls.str.map(t => `<div style="font-size:13px;line-height:1.5;color:#dff5cf;">▲ ${t}</div>`).join("");
     const weakHtml = cls.weak.map(t => `<div style="font-size:13px;line-height:1.5;color:#ffd6de;">▼ ${t}</div>`).join("");
@@ -599,7 +681,7 @@ const App = {
       const mark = r.good ? "◎" : "×";
       return `
       <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#0d0a22;">
-        <div style="flex:none;width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:${color};font-family:'Press Start 2P',monospace;font-size:7px;color:#0d0a22;">${mark}</div>
+        <div class="luck-mark" style="flex:none;width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:${color};font-family:'Press Start 2P',monospace;font-size:7px;color:#05030f;">${mark}</div>
         <div style="flex:1;font-size:12.5px;color:#cfc6f5;">${r.label}</div>
         <div style="flex:none;font-family:'Press Start 2P',monospace;font-size:7px;color:${color};">${r.pct}</div>
       </div>`;
@@ -607,29 +689,29 @@ const App = {
 
     const partyHtml = cls.party.map(id => {
       const c = byId(CLASSES, id);
-      return `<div class="btn list-item" onclick="App.openClass('${id}')" style="cursor:pointer;padding:8px 10px;background:#1e1746;border:3px solid ${c.color};font-size:12.5px;font-weight:600;color:#e8e2ff;">${c.th}</div>`;
+      return `<div class="btn list-item party-item" onclick="App.openClass('${id}')" style="cursor:pointer;padding:8px 10px;background:#1e1746;border:3px solid ${classColor(c.color)};font-size:12.5px;font-weight:600;color:#e8e2ff;">${c.th}</div>`;
     }).join("");
 
     return `
 <div style="padding:0 0 34px;">
-  <div style="position:relative;padding:20px 18px 18px;background:${cls.color};border-bottom:5px solid #05030f;overflow:hidden;">
+  <div style="position:relative;padding:20px 18px 18px;background:${classColor(cls.color)};border-bottom:5px solid #05030f;overflow:hidden;">
     <div style="position:absolute;inset:0;opacity:.22;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:10px 10px;"></div>
     <div style="position:relative;display:flex;align-items:center;justify-content:space-between;">
       <div class="btn" onclick="App.resultBack()" style="cursor:${canGoBack ? "pointer" : "default"};font-family:Kanit,sans-serif;font-weight:600;font-size:12.5px;color:rgba(5,3,15,.7);">${resultTag}</div>
       <div class="btn" onclick="App.goCodex()" style="cursor:pointer;font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#05030f;">ทำเนียบ ▶</div>
     </div>
     <div style="position:relative;margin-top:12px;display:flex;align-items:flex-end;gap:14px;">
-      <div style="position:relative;flex:none;width:104px;height:104px;padding:8px;background:rgba(5,3,15,.28);border:4px solid #05030f;animation:bob 2.8s ease-in-out infinite;">
+      <div class="hero-avatar-frame" style="position:relative;flex:none;width:104px;height:104px;padding:8px;background:rgba(5,3,15,.28);border:4px solid #05030f;animation:bob 2.8s ease-in-out infinite;">
         ${profileImg ? `<img src="${esc(profileImg)}" alt="" style="display:block;width:100%;height:100%;object-fit:cover;">` : pixelAvatar(SHADOWS[av.id])}
       </div>
       <div style="flex:1;min-width:0;padding-bottom:4px;">
         <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:rgba(5,3,15,.7);">LV.${heroLevel}</div>
-        <div style="margin-top:5px;font-size:19px;font-weight:700;line-height:1.25;color:#0d0a22;text-wrap:balance;">${heroNameOut}</div>
+        <div style="margin-top:5px;font-size:19px;font-weight:700;line-height:1.25;color:#05030f;text-wrap:balance;">${heroNameOut}</div>
         ${roleOut}
-        ${profileImg ? "" : `<div style="margin-top:4px;display:inline-block;padding:4px 8px;background:#0d0a22;font-family:'Press Start 2P',monospace;font-size:9px;color:${cls.color};">${av.name}</div>`}
+        ${profileImg ? "" : `<div class="hero-role" style="margin-top:4px;display:inline-block;padding:4px 8px;background:#0d0a22;font-family:'Press Start 2P',monospace;font-size:9px;color:${classColor(cls.color)};">${av.name}</div>`}
       </div>
     </div>
-    <div style="position:relative;margin-top:12px;font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.6;color:#0d0a22;text-shadow:2px 2px 0 rgba(255,255,255,.35);">${cls.en}</div>
+    <div style="position:relative;margin-top:12px;font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.6;color:#05030f;text-shadow:2px 2px 0 rgba(255,255,255,.35);">${cls.en}</div>
     <div style="position:relative;margin-top:4px;font-size:15px;font-weight:600;color:rgba(13,10,34,.82);">${cls.th}</div>
   </div>
 
@@ -641,7 +723,7 @@ const App = {
     <div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
         <div style="width:10px;height:10px;background:${ACCENT};"></div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">STATUS</div>
+        <div class="section-title" style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">STATUS</div>
         <div style="flex:1;height:3px;background:#2b2159;"></div>
       </div>
       <div style="padding:13px 12px;background:#0d0a22;border:4px solid #05030f;display:flex;flex-direction:column;gap:9px;">
@@ -653,7 +735,7 @@ const App = {
     <div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
         <div style="width:10px;height:10px;background:#3fd0c9;"></div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">SKILLS<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">ความถนัด</span></div>
+        <div class="section-title" style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">SKILLS<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">ความถนัด</span></div>
         <div style="flex:1;height:3px;background:#2b2159;"></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">${skillsHtml}</div>
@@ -661,8 +743,8 @@ const App = {
 
     <div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
-        <div style="width:10px;height:10px;background:${cls.color};"></div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">CAREER<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">เทียบได้กับสายงานเทค</span></div>
+        <div style="width:10px;height:10px;background:${classColor(cls.color)};"></div>
+        <div class="section-title" style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">CAREER<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">เทียบได้กับสายงานเทค</span></div>
         <div style="flex:1;height:3px;background:#2b2159;"></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${hintHtml}</div>
@@ -682,13 +764,13 @@ const App = {
     <div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
         <div style="width:10px;height:10px;background:#f2b73d;"></div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">LUCK<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">ดวงวันนี้</span></div>
+        <div class="section-title" style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">LUCK<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">ดวงวันนี้</span></div>
         <div style="flex:1;height:3px;background:#2b2159;"></div>
       </div>
       <div style="padding:13px 12px;background:#241c52;border:4px solid #05030f;box-shadow:inset 0 0 0 3px #3a2d78;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#f2b73d;border:4px solid #05030f;font-family:'Press Start 2P',monospace;font-size:16px;color:#211736;">${luck.die}</div>
-          <div style="flex:1;font-size:13.5px;line-height:1.55;color:#f4ecd8;text-wrap:pretty;">${luck.omen}</div>
+          <div class="content-title" style="flex:1;font-size:13.5px;line-height:1.55;color:#f4ecd8;text-wrap:pretty;">${luck.omen}</div>
         </div>
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">${luckRollsHtml}</div>
         <div class="btn reroll-btn" onclick="App.rerollLuck()" style="margin-top:11px;cursor:pointer;padding:9px;background:#0d0a22;border:3px solid #f2b73d;text-align:center;font-family:Kanit,sans-serif;font-weight:600;font-size:13.5px;color:#f2b73d;">⟳ สุ่มดวงใหม่</div>
@@ -698,7 +780,7 @@ const App = {
     <div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
         <div style="width:10px;height:10px;background:#b98cf2;"></div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">PARTY UP<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">เข้ากันดีกับ</span></div>
+        <div class="section-title" style="font-family:'Press Start 2P',monospace;font-size:10px;color:#f4ecd8;">PARTY UP<span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#9d92d6;margin-left:7px;">เข้ากันดีกับ</span></div>
         <div style="flex:1;height:3px;background:#2b2159;"></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${partyHtml}</div>
@@ -706,7 +788,7 @@ const App = {
 
     <div style="display:flex;flex-direction:column;gap:9px;margin-top:2px;">
       ${st.screen === "quizResult" ? `<div class="btn btn-primary" onclick="App.restart()" style="cursor:pointer;padding:14px;background:${ACCENT};border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-family:Kanit,sans-serif;font-weight:700;font-size:16px;color:#211736;">↺ ทำแบบทดสอบใหม่</div>` : ""}
-      <div class="btn btn-secondary" onclick="App.goCodex()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-weight:600;font-size:14px;color:#cfc6f5;">ดูอาชีพอื่นในกิลด์</div>
+      <div class="btn btn-secondary" onclick="App.goCodex()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-weight:600;font-size:14px;color:#cfc6f5;">ดูคลาสอื่นในกิลด์</div>
       <div class="btn btn-secondary" onclick="App.goRoster()" style="cursor:pointer;padding:12px;background:#241c52;border:4px solid #05030f;box-shadow:0 5px 0 #05030f;text-align:center;font-weight:600;font-size:14px;color:#cfc6f5;">รายชื่อสมาชิกในกิลด์ (${MEMBERS.length})</div>
     </div>
   </div>
@@ -719,10 +801,10 @@ const App = {
       const topHtml = top.map(k => `<div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#8b7ed8;">${k} ${c.st[k]}</div>`).join("");
       return `
       <div class="btn list-item" onclick="App.openClass('${c.id}')" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:11px;background:#1e1746;border:4px solid #05030f;box-shadow:0 4px 0 #05030f;">
-        <div style="flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:${c.color};border:3px solid #05030f;font-family:'Press Start 2P',monospace;font-size:13px;color:#0d0a22;">${c.short}</div>
+        <div style="flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:${classColor(c.color)};border:3px solid #05030f;font-family:'Press Start 2P',monospace;font-size:13px;color:#05030f;">${c.short}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:${c.color};">${c.en}</div>
-          <div style="margin-top:5px;font-size:13.5px;font-weight:600;color:#e8e2ff;">${c.th}</div>
+          <div class="codex-en" style="font-family:'Press Start 2P',monospace;font-size:9px;color:${classColor(c.color)};">${c.en}</div>
+          <div class="codex-name" style="margin-top:5px;font-size:13.5px;font-weight:600;color:#e8e2ff;">${c.th}</div>
           <div style="margin-top:5px;display:flex;gap:8px;">${topHtml}</div>
         </div>
         <div style="flex:none;font-family:'Press Start 2P',monospace;font-size:9px;color:#4b418a;">▶</div>
@@ -732,10 +814,10 @@ const App = {
     return `
 <div style="padding:18px 18px 34px;">
   <div style="display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">CLASS CODEX</div>
+    <div class="screen-title" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">CLASS CODEX</div>
     <div class="btn" onclick="App.codexBack()" style="cursor:pointer;font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#8b7ed8;">◀ กลับ</div>
   </div>
-  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">ทำเนียบ ${CLASSES.length} อาชีพของกิลด์สาย DEV — แตะเพื่อดูรายละเอียด</div>
+  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">ทำเนียบ ${CLASSES.length} คลาสของกิลด์สาย DEV — แตะเพื่อดูรายละเอียด</div>
   <div class="btn codex-link" onclick="App.goRoster()" style="margin-top:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 11px;background:#0d0a22;border:3px solid #2b2159;"><span style="font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#cfc6f5;">ดูรายชื่อสมาชิกในกิลด์</span><span style="font-family:'Press Start 2P',monospace;font-size:8px;color:${ACCENT};">${MEMBERS.length} ▶</span></div>
   <div style="margin-top:16px;display:flex;flex-direction:column;gap:9px;">${codexHtml}</div>
 </div>`;
@@ -746,7 +828,7 @@ const App = {
     const averageLevel = MEMBERS.length ? Math.round(MEMBERS.reduce((total, member) => total + effectiveLevel(member), 0) / MEMBERS.length) : 0;
     const rosterStats = [
       { n: MEMBERS.length, label: "สมาชิกทั้งหมด", color: ACCENT },
-      { n: new Set(MEMBERS.map(m => m.c)).size, label: "สายอาชีพที่มี", color: "#3fd0c9" },
+      { n: new Set(MEMBERS.map(m => m.c)).size, label: "คลาสที่มี", color: "#3fd0c9" },
       { n: averageLevel, label: "เลเวลเฉลี่ย", color: "#e0508f" }
     ];
     const statsHtml = rosterStats.map(rs => `
@@ -762,7 +844,7 @@ const App = {
       const on = st.filter === f.id;
       const bg = on ? ACCENT : "#241c52";
       const fg = on ? "#211736" : "#9d92d6";
-      return `<div class="btn" onclick="App.setFilter('${f.id}')" style="flex:none;cursor:pointer;padding:7px 10px;background:${bg};border:3px solid #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:12.5px;color:${fg};white-space:nowrap;">${f.label}</div>`;
+      return `<div class="btn${on ? " filter-active" : ""}" onclick="App.setFilter('${f.id}')" style="flex:none;cursor:pointer;padding:7px 10px;background:${bg};border:3px solid #05030f;font-family:Kanit,sans-serif;font-weight:600;font-size:12.5px;color:${fg};white-space:nowrap;">${f.label}</div>`;
     }).join("");
 
     const members = MEMBERS.filter(m => st.filter === "all" || m.c === st.filter);
@@ -776,14 +858,14 @@ const App = {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:7px;">
-            <span style="font-size:15px;font-weight:600;color:#f4ecd8;">${m.n}</span>
+            <span class="member-name" style="font-size:15px;font-weight:600;color:#f4ecd8;">${m.n}</span>
             <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#6a5fae;">LV.${effectiveLevel(m)}</span>
           </div>
           <div style="margin-top:4px;font-size:12.5px;color:#9d92d6;">${m.r}</div>
         </div>
         <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-          <div style="padding:3px 7px;background:${c.color};font-family:'Press Start 2P',monospace;font-size:8px;color:#0d0a22;">${c.short}</div>
-          <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:${c.color};">${c.en}</div>
+          <div style="padding:3px 7px;background:${classColor(c.color)};font-family:'Press Start 2P',monospace;font-size:8px;color:#05030f;">${c.short}</div>
+          <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:${classColor(c.color)};">${c.en}</div>
         </div>
       </div>`;
     }).join("");
@@ -794,10 +876,10 @@ const App = {
     return `
 <div style="padding:18px 18px 34px;">
   <div style="display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">GUILD ROSTER</div>
+    <div class="screen-title" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8;text-shadow:3px 3px 0 #05030f;">GUILD ROSTER</div>
     <div class="btn" onclick="App.rosterBack()" style="cursor:pointer;font-family:Kanit,sans-serif;font-weight:600;font-size:13px;color:#8b7ed8;">◀ กลับ</div>
   </div>
-  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">สมาชิกกิลด์ INV · CSM Chapter — ชื่อและสายอาชีพประจำตัว</div>
+  <div style="margin-top:8px;font-size:13px;color:#8b7ed8;">สมาชิกกิลด์ INV · CSM Chapter — ชื่อและคลาสประจำตัว</div>
 
   <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">${statsHtml}</div>
 

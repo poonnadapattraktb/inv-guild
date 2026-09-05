@@ -111,14 +111,15 @@ async function run() {
   const guest = await boot("", null);
   assert.equal(guest.App.state.screen, "welcome");
   assert.equal(guest.App.state.mode, "guest");
-  assert.match(guest.appElement.innerHTML, /เลือกอาชีพ/);
+  assert.equal(guest.App.state.theme, "light");
+  assert.match(guest.appElement.innerHTML, /เลือกคลาส/);
   guest.App.goHomePrimary();
   assert.equal(guest.App.state.screen, "avatar");
 
   const pending = await boot("?id=" + pendingRow.id, pendingRow);
   assert.equal(pending.App.state.screen, "welcome");
   assert.equal(pending.App.state.mode, "member");
-  assert.match(pending.appElement.innerHTML, /เลือกอาชีพ/);
+  assert.match(pending.appElement.innerHTML, /เลือกคลาส/);
   assert.match(pending.appElement.innerHTML, /GUEST MODE/);
   pending.App.playAsGuest();
   assert.equal(pending.App.state.mode, "guest");
